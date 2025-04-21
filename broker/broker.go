@@ -10,12 +10,11 @@ const addr string = "localhost:8080";
 //make a map of net Conn and struct (because 0 bytes) //simulate a set
 var ActiveConnections = make(map[net.Conn]struct{})
 
-
 func handleConnection(curCon net.Conn){
 	defer curCon.Close()
 	fmt.Println("connection accepted")
-	fmt.Printf("Total no of clients are now %d\n",len(ActiveConnections));
 	ActiveConnections[curCon] = struct{}{}
+	fmt.Printf("Total no of clients are now %d\n",len(ActiveConnections));
 	for {
 		buf := make([]byte,2049)
 		totalread := 0;
@@ -29,12 +28,14 @@ func handleConnection(curCon net.Conn){
 			}
 			totalread += n
 		}
+		fmt.Println("NEW PACKET_-----------------------------------------")
 		packet_type := int(buf[0]);
 		fmt.Println("Packet Type: ",packet_type);
 		topic := strings.Trim(string(buf[1:1025]),"\x00");
 		fmt.Println("Topic:",topic);
 		payload := strings.Trim(string(buf[1025:2049]),"\x00");
 		fmt.Println("Paylod:",payload);
+		fmt.Println("----------------------------------------------------")
 	}
 }
 
