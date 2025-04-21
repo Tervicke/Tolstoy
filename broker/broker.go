@@ -7,27 +7,35 @@ import (
 )
 
 const addr string = "localhost:8080";
-var Activeconnection []net.Conn;
+//make a map of net Conn and struct (because 0 bytes) //simulate a set
+var ActiveConnections = make(map[net.Conn]struct{})
+
 
 func handleConnection(curCon net.Conn){
 	defer curCon.Close()
-	Activeconnection = append(Activeconnection,curCon);
-	fmt.Printf("connection accepted \n Total no of clients are now %d\n",len(Activeconnection));
-	buf :=	make([]byte,2049);
-	packet_size,err := curCon.Read(buf);
-	if err != nil{
-		fmt.Println("Error reading the buffer");
-		return;
+	fmt.Println("connection accepted")
+	fmt.Printf("Total no of clients are now %d\n",len(ActiveConnections));
+	ActiveConnections[curCon] = struct{}{}
+	for {
+		buf := make([]byte,2049)
+		totalread := 0;
+		for totalread < 2049 {
+			n , err := curCon.Read(buf[totalread:])
+			if err != nil{
+				fmt.Println("A client just disconnected")
+				delete(ActiveConnections ,curCon)
+				fmt.Printf("Total no of clients are now %d\n",len(ActiveConnections));
+				return;
+			}
+			totalread += n
+		}
+		packet_type := int(buf[0]);
+		fmt.Println("Packet Type: ",packet_type);
+		topic := strings.Trim(string(buf[1:1025]),"\x00");
+		fmt.Println("Topic:",topic);
+		payload := strings.Trim(string(buf[1025:2049]),"\x00");
+		fmt.Println("Paylod:",payload);
 	}
-	if packet_size < 2049{
-		fmt.Println("invalid packet recieved");
-	}
-	packet_type := int(buf[0]);
-	fmt.Println("Packet Type: ",packet_type);
-	topic := strings.Trim(string(buf[1:1025]),"\x00");
-	fmt.Println("Topic:",topic);
-	payload := strings.Trim(string(buf[1025:2049]),"\x00");
-	fmt.Println("Paylod:",payload);
 }
 
 func main() {
