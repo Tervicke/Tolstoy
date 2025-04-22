@@ -19,14 +19,14 @@ Type - 1
 Topic - whatever topic was sent in the packet
 Payload - whatever message was sent in the packet
 
-2. #### connection request 
-The client socket is connected , The broker will start handling the upcoming packets
-Type - 1
-Topic - Ignored 
-Payload - Ignored 
+2. #### server packet
+This is a server packet sent to all the subscribers with the topic name and the message 
+Type - 2 
+Topic - The topic in which u are subscribed and the message is sent in
+Payload - The message
 
-3. #### disconnection request 
-The client socket is disconnected and the broker wont handle any future packets 
-Type - 3 
-Topic - Ignored 
-Message - Ignored 
+3. #### publish request
+the payload will be sent to every subscriber subscribed to the topic provided in the packet
+Type - 4
+Topic - Topic to publish the message 
+Message - Message to be published
