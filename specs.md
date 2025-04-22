@@ -13,15 +13,20 @@ Message - Its the 1024 bytes payload which is acted
 ---------------------------------------------------------------------------------------
 
 ## Examples
+1.#### Acknowledge 
+This is a broker only packet send by the broker to indidicate the accepetance of the previous packet , the topic and message data remains same
+Type - 1
+Topic - whatever topic was sent in the packet
+Payload - whatever message was sent in the packet
 
-1. #### connection request 
-The client socket is connected
+2. #### connection request 
+The client socket is connected , The broker will start handling the upcoming packets
 Type - 1
 Topic - Ignored 
-Message - Ignored 
+Payload - Ignored 
 
-2. #### disconnection request 
-The client socket is disconnected
-Type - 2
+3. #### disconnection request 
+The client socket is disconnected and the broker wont handle any future packets 
+Type - 3 
 Topic - Ignored 
 Message - Ignored 
