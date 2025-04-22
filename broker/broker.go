@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"strings"
 )
 
 const addr string = "localhost:8080";
@@ -28,14 +27,8 @@ func handleConnection(curCon net.Conn){
 			}
 			totalread += n
 		}
-		fmt.Println("NEW PACKET_-----------------------------------------")
-		packet_type := int(buf[0]);
-		fmt.Println("Packet Type: ",packet_type);
-		topic := strings.Trim(string(buf[1:1025]),"\x00");
-		fmt.Println("Topic:",topic);
-		payload := strings.Trim(string(buf[1025:2049]),"\x00");
-		fmt.Println("Paylod:",payload);
-		fmt.Println("----------------------------------------------------")
+		newpacket := newPacket([2049]byte(buf));
+		newpacket.Print();
 	}
 }
 
