@@ -12,26 +12,23 @@ var Topics = make(map[string]map[net.Conn]struct{})
 
 func handleConnection(curCon net.Conn){
 	defer curCon.Close()
-	fmt.Println("connection accepted")
 	ActiveConnections[curCon] = struct{}{}
-	fmt.Printf("Total no of clients are now %d\n",len(ActiveConnections));
 	for {
 		buf := make([]byte,2049)
 		totalread := 0;
 		for totalread < 2049 {
 			n , err := curCon.Read(buf[totalread:])
 			if err != nil{
-				fmt.Println("A client just disconnected")
 				delete(ActiveConnections ,curCon)
-				fmt.Printf("Total no of clients are now %d\n",len(ActiveConnections));
 				return;
 			}
 			totalread += n
 		}
 		newpacket := newPacket([2049]byte(buf),curCon);
-		newpacket.Print();
 		if handlepacket, ok := handlers[newpacket.Type]; ok {
 			//todo: implement the Acknowledge packet and send it after handlerfunc returns a no error 
+			fmt.Println("packet recieved....handling")
+			fmt.Println(newpacket.Payload)
 			handlepacket(newpacket)
 		}else{
 			//specify error code and and send it accordingly 

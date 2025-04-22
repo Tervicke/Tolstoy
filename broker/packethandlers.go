@@ -1,14 +1,16 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"net"
+)
 
 type packetHandler func(packet Packet)
 
 var handlers = map[uint8]packetHandler{
-	2:handleConnectionPacket, //handles the upcoming connections and adds them to the ActiveConnections map
-	3:handleDisconnectionPacket, //handles the disconnection request
-	4:handlePublishPacket, //handles the publish packet
-	5: handleSubscribePacket, //handles the subscribe packet
+	3:handlePublishPacket, //handles the publish packet
+	4:handleSubscribePacket, //handles the subscribe packet
+	5:handleSubscribeCreatePacket,
 }
 func handlePublishPacket(packet Packet){
 	clients , exists := Topics[packet.Topic]
@@ -17,13 +19,25 @@ func handlePublishPacket(packet Packet){
 			packet.Type = 2 // change the packet type to indicating its a server packet
 			client.Write( packet.toBytes()  )
 		}
+		fmt.Println("message published")
 	}else{
+		fmt.Println("topic not exist")
+		fmt.Println("Topic-",packet.Topic)
 		// TODO: Implement Error
 	}
 }
 
 func handleSubscribePacket(packet Packet){
+}
 
+func handleSubscribeCreatePacket(packet Packet){
+	_ , exists := Topics[packet.Topic]
+	if !exists{
+		Topics[packet.Topic] = make(map[net.Conn]struct{})
+	}
+	Topics[packet.Topic][packet.Conn] = struct{}{}
+	fmt.Println("subscriber added")
+	fmt.Println("Topic-",packet.Topic)
 }
 
 func handleConnectionPacket(packet Packet) {

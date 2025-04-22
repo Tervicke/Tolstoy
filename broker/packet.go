@@ -14,8 +14,9 @@ type Packet struct{
 }
 
 func newPacket(packetbuffer [2049]byte , conn net.Conn) Packet{
-	topicStr := string(packetbuffer[1:2025])	
-	payloadStr := string(packetbuffer[2025:2049])
+	topicStr := string(packetbuffer[1:1025])        
+	payloadStr := string(packetbuffer[1025:2049])  
+
 
 	strings.Trim(topicStr,"\x00")
 	strings.Trim(payloadStr,"\x00") //trim the null bytes
@@ -39,6 +40,6 @@ func (p *Packet) toBytes() []byte {
 	buf :=  make([]byte , 2049)
 	buf[0] = p.Type
 	copy(buf[1:2025] , []byte(p.Topic))
-	copy(buf[2025:2049] , []byte(p.Topic))
+	copy(buf[1025:2049] , []byte(p.Payload))
 	return buf
 }
