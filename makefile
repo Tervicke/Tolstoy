@@ -1,2 +1,2 @@
 runbroker:
-	go run broker/broker.go
+	go run broker/*.go
