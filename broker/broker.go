@@ -8,6 +8,7 @@ import (
 const addr string = "localhost:8080";
 //make a map of net Conn and struct (because 0 bytes) //simulate a set
 var ActiveConnections = make(map[net.Conn]struct{})
+var Topics = make(map[string]map[net.Conn]struct{})
 
 func handleConnection(curCon net.Conn){
 	defer curCon.Close()
