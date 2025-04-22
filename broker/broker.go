@@ -29,9 +29,9 @@ func handleConnection(curCon net.Conn){
 		}
 		newpacket := newPacket([2049]byte(buf),curCon);
 		newpacket.Print();
-		if handlerfunc , ok := handlers[newpacket.Type]; ok {
+		if handlepacket, ok := handlers[newpacket.Type]; ok {
 			//todo: implement the Acknowledge packet and send it after handlerfunc returns a no error 
-			handlerfunc(newpacket)
+			handlepacket(newpacket)
 		}else{
 			//specify error code and and send it accordingly 
 			fmt.Println("invalid packet type")
