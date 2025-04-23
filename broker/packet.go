@@ -5,6 +5,20 @@ import (
 	"net"
 	"strings"
 )
+//this is the Acknowledge packet sent by the broker when the message / request is handled is handled
+//the topic and the payload will be same of whatever was sent to the server
+type AckPacket struct{
+	Type uint8
+	Topic string
+	Payload string
+}
+
+//This is the Err packet that is sent by the broker when the handler finds and error in the request / message 
+//Error will contain the error as string and Type will be a error type
+type ErrPacket struct{
+	Type uint8
+	Error string	
+}
 
 type Packet struct{
 	Conn net.Conn
