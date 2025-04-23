@@ -57,3 +57,9 @@ func (p *Packet) toBytes() []byte {
 	copy(buf[1025:2049] , []byte(p.Payload))
 	return buf
 }
+func newErrPacket(err string) [2049]byte{
+	var errpacket [2049]byte;
+	errpacket[0] = 2;
+	copy(errpacket[1:], []byte(err))
+	return errpacket
+}

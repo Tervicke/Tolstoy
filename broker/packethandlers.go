@@ -29,7 +29,9 @@ func handlePublishPacket(packet Packet){
 func handleSubscribePacket(packet Packet){
 	_ , exists := Topics[packet.Topic]
 	if !exists{
-		//send error that topic doesnt exist
+		errorpacket := newErrPacket("Error not a valid type");
+		packet.Conn.Write(errorpacket[:]);
+		return;
 	}
 	//add subscriber
 	Topics[packet.Topic][packet.Conn] = struct{}{}
