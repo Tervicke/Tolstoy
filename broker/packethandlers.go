@@ -29,7 +29,8 @@ func handlePublishPacket(packet Packet){
 func handleSubscribePacket(packet Packet){
 	_ , exists := Topics[packet.Topic]
 	if !exists{
-		errorpacket := newErrPacket("Error not a valid type");
+		errorpacket := newErrPacket("Topic does not exist");
+		fmt.Println("Sending bytes:", errorpacket[:])
 		packet.Conn.Write(errorpacket[:]);
 		return;
 	}
