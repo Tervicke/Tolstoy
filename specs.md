@@ -1,36 +1,64 @@
-## The specs for the pub sub system
+## **Pub-Sub System Specifications**
 
-Each packet is structured in the following way
-Type - It is an int denoting the the type of the packet
-Topic - Its an 1024 bytes long ascii string , containing the topic name
-Message - Its the 1024 bytes payload which is acted
+Each packet in the system is structured as follows:
 
-| Field    | Size       | Description																									|
-|----------|------------|------------------------------------------------------------ |
-| Type     | 1 byte     | Integer value: 1 = connection request , 2 = disconnection request, etc.             |
-| Topic    | 1024 bytes | ASCII string representing the topic (padded if necessary)   |
-| Message  | 1024 bytes | ASCII string representing the message (padded if necessary) |
----------------------------------------------------------------------------------------
+- **Type**: An integer representing the packet type.
+- **Topic**: A 1024-byte ASCII string containing the topic name.
+- **Payload**: A 1024-byte ASCII string containing the message payload.
 
-## Examples
-1. #### Acknowledge 
-This is a broker only packet send by the broker to indidicate the accepetance of the previous packet , the topic and message data remains same
-Type - 1
-Topic - whatever topic was sent in the packet
-Payload - whatever message was sent in the packet
-2. #### Error
-This is a broker only packte send by the broker to indidicate an error in the previous sent packet 
-Type - 2 (1 byte)
-Error - This is a string indicating an error ( 2048 bytes)
+| **Field**   | **Size**       | **Description**                                                                                                 |
+|-------------|----------------|-----------------------------------------------------------------------------------------------------------------|
+| **Type**    | 1 byte         | Integer value:<br> 1 = Connection request, 2 = Disconnection request, etc.                                      |
+| **Topic**   | 1024 bytes     | ASCII string representing the topic (padded if necessary).                                                     |
+| **Payload** | 1024 bytes     | ASCII string representing the payload/message (padded if necessary).                                           |
 
-3. #### server packet
-This is a server packet sent to all the subscribers with the topic name and the message 
-Type - 2 
-Topic - The topic in which u are subscribed and the message is sent in
-Payload - The message
+---
 
-4. #### publish request
-the payload will be sent to every subscriber subscribed to the topic provided in the packet
-Type - 4
-Topic - Topic to publish the message 
-Message - Message to be published
+## **Examples**
+
+### 1. **Acknowledge Packet**
+- **Description**: Sent by the broker to indicate the acceptance of a previously received packet. The topic and payload remain unchanged.
+  
+  **Fields**:
+  - **Type**: 1
+  - **Topic**: Same as received packet
+  - **Payload**: Same as received packet
+
+---
+
+### 2. **Error Packet**
+- **Description**: Sent by the broker to indicate an error in a previously received packet.
+
+  **Fields**:
+  - **Type**: 2
+  - **Payload**: A string indicating the error (2048 bytes)
+
+---
+
+### 3. **Server Packet**
+- **Description**: Sent by the broker to all subscribers of a topic with the relevant message content.
+
+  **Fields**:
+  - **Type**: 3
+  - **Topic**: The topic being published to
+  - **Payload**: The message payload
+
+---
+
+### 4. **Publish Packet**
+- **Description**: Sent by a publisher to deliver a message to all subscribers of a given topic.A new topic is created if the topic doesnt exist. 
+
+  **Fields**:
+  - **Type**: 4
+  - **Topic**: The topic to publish to
+  - **Payload**: The message payload
+
+---
+
+### 5. **Subscribe Packet**
+- **Description**: Sent by a client to subscribe to a topic. Will return an error packet if no such topic exists
+
+  **Fields**:
+  - **Type**: 5
+  - **Topic**: The topic to subscribe to
+  - **Payload**: Ignored
