@@ -7,4 +7,5 @@ read the [specs](specs.md) to get a understanding of how the pub susb system .
 - [ ] Add baisc authentication in the topic access
 - [ ] Persistent storage of messages 
 - [ ] Write a small benchmark tool
-- [ ] Add logging  
+- [ ] Add logging
+- [ ] better readme and build & run instructions
