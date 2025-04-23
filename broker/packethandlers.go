@@ -19,7 +19,7 @@ func handlePublishPacket(packet Packet){
 	}
 	if exists {
 		for client := range clients{
-			packet.Type = 2 // change the packet type to indicating its a server packet
+			packet.Type = 3 // change the packet type to indicating its a server sent packet
 			client.Write( packet.toBytes()  )
 		}
 		fmt.Println("message published")
