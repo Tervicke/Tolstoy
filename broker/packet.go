@@ -5,14 +5,6 @@ import (
 	"net"
 	"strings"
 )
-//this is the Acknowledge packet sent by the broker when the message / request is handled is handled
-//the topic and the payload will be same of whatever was sent to the server
-type AckPacket struct{
-	Type uint8
-	Topic string
-	Payload string
-}
-
 //This is the Err packet that is sent by the broker when the handler finds and error in the request / message 
 //Error will contain the error as string and Type will be a error type
 type ErrPacket struct{
@@ -63,3 +55,11 @@ func newErrPacket(err string) [2049]byte{
 	copy(errpacket[1:], []byte(err))
 	return errpacket
 }
+func (p *Packet ) acknowledge(){
+	var ackpacket [2049]byte;
+	ackpacket[0] = 1;
+	copy(ackpacket[1:1025], []byte(p.Topic))
+	copy(ackpacket[1025:], []byte(p.Payload))
+	p.Conn.Write(ackpacket[:])
+}
+
