@@ -22,7 +22,7 @@ func handlePublishPacket(packet Packet){
 			packet.Type = 3 // change the packet type to indicating its a server sent packet
 			client.Write( packet.toBytes()  )
 		}
-		fmt.Println("message published")
+		//fmt.Println("message published")
 	}
 }
 
@@ -30,7 +30,6 @@ func handleSubscribePacket(packet Packet){
 	_ , exists := Topics[packet.Topic]
 	if !exists{
 		errorpacket := newErrPacket("Topic does not exist");
-		fmt.Println("Sending bytes:", errorpacket[:])
 		packet.Conn.Write(errorpacket[:]);
 		return;
 	}
