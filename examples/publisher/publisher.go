@@ -23,7 +23,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	defer agent.Terminate()
 	// Create a scanner for reading input
 	scanner := bufio.NewScanner(os.Stdin)
 
