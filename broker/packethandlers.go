@@ -5,13 +5,13 @@ import (
 	"net"
 )
 
-type packetHandler func(packet Packet)
+type packetHandler func(packet Packet) bool
 
 var handlers = map[uint8]packetHandler{
 	4:handlePublishPacket, //handles the publish packet
 	5:handleSubscribePacket, //handles the subscribe packet
 }
-func handlePublishPacket(packet Packet){
+func handlePublishPacket(packet Packet) bool{
 	clients , exists := Topics[packet.Topic]
 	//if the topic doesnt exist create it 
 	if !exists{
@@ -24,17 +24,19 @@ func handlePublishPacket(packet Packet){
 		}
 		//fmt.Println("message published")
 	}
+	return true
 }
 
-func handleSubscribePacket(packet Packet){
+func handleSubscribePacket(packet Packet) bool {
 	_ , exists := Topics[packet.Topic]
 	if !exists{
 		errorpacket := newErrPacket("Topic does not exist");
 		packet.Conn.Write(errorpacket[:]);
-		return;
+		return false;
 	}
 	//add subscriber
 	Topics[packet.Topic][packet.Conn] = struct{}{}
 	fmt.Println("subscriber added")
 	fmt.Println("Topic-",packet.Topic)
+	return true
 }
