@@ -18,9 +18,18 @@ Each packet in the system is structured as follows:
 
 ### 1. **Acknowledge Packet**
 - **Description**: Sent by the broker to indicate the acceptance of a previously received packet. The topic and payload remain unchanged.
-  
+    
+    Acknowledgment Types:
+
+    Type Code | ACK Type         | Description
+    ----------|------------------|--------------------------------------------------
+    10        | PUBLISH_ACK      | Acknowledges receipt of a published message
+    11        | SUBSCRIBE_ACK    | Acknowledges a successful subscribe
+    12        | UNSUBSCRIBE_ACK  | Acknowledges unsubscribe completion
+
+
   **Fields**:
-  - **Type**: 1
+  - **Type**: One of the above
   - **Topic**: Same as received packet
   - **Payload**: Same as received packet
 
