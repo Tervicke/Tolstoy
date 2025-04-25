@@ -8,7 +8,7 @@ Each packet in the system is structured as follows:
 
 | **Field**   | **Size**       | **Description**                                                                                                 |
 |-------------|----------------|-----------------------------------------------------------------------------------------------------------------|
-| **Type**    | 1 byte         | Integer value:<br> 1 = Connection request, 2 = Disconnection request, etc.                                      |
+| **Type**    | 1 byte         | Integer value:<br> serverpacket , error packet etc.                                      |
 | **Topic**   | 1024 bytes     | ASCII string representing the topic (padded if necessary).                                                     |
 | **Payload** | 1024 bytes     | ASCII string representing the payload/message (padded if necessary).                                           |
 
