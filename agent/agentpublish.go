@@ -10,7 +10,7 @@ import (
 func (a* agent) Publish(topic string , message string) error{
 	buf := make([]byte,2049)
 	buf[0] = 4; 
-	copy(buf[1:2025] , []byte(topic))
+	copy(buf[1:1025] , []byte(topic))
 	copy(buf[1025:2049] , []byte(message))
 	go func() {
         _, err := a.conn.Write(buf[:])
