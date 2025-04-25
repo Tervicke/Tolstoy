@@ -15,8 +15,8 @@ func (a* agent) Publish(topic string , message string) error{
 	go func() {
         _, err := a.conn.Write(buf[:])
         if err != nil {
-						return errors.New("Error occured recieved wrong ack")
-            return
+						fmt.Println("Error occured recieved wrong ack")
+						return
         }
     }()
 	//	a.conn.Write(buf[:])
