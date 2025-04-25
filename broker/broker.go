@@ -31,8 +31,8 @@ func handleConnection(curCon net.Conn){
 			fmt.Println("packet recieved....acknowledging and handling")
 			if handlepacket(newpacket) {
 				fmt.Println("handled")
-				newpacket.acknowledge()
-				fmt.Println("acknowledged")
+				//newpacket.acknowledge()
+				//fmt.Println("acknowledged")
 			}else{
 				fmt.Println("could not acknowledge , error")
 			}
