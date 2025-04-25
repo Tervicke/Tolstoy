@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"fmt"
 	"net"
 )
 
@@ -50,12 +49,10 @@ func (a* agent) listen(){
 func (a* agent) Terminate() {
 	a.StopListening()
 	a.conn.Close()
-	fmt.Println("closed connection")
 }
 func (a* agent) StopListening(){
 	if a.listening{
 		close(a.stop)
 	}
 	a.listening = false
-	fmt.Println("stopped listening to the upcoming messages")
 }
