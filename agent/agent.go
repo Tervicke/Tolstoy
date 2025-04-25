@@ -9,6 +9,7 @@ type agent struct{
 	conn net.Conn
 	stop chan struct{}
 	listening bool //true - listening channel exists
+	ackchan chan packet
 }
 
 func NewAgent(addr string) (*agent,  error) {
@@ -16,28 +17,36 @@ func NewAgent(addr string) (*agent,  error) {
 	if err != nil{
 		return nil,err
 	}
-	return &agent{
+	a := &agent{
 		conn:   conn,
 		stop : make(chan struct{}), // Create the stop channel
-	}, nil
+		ackchan:  make(chan packet),
+	}
+	go a.listen()
+	return a,nil
 }
 
 func (a* agent) listen(){
 	for{
-		select{
-		case <- a.stop:
-			return// return when the agent wants to stop listening 
-		default:
-			fmt.Println("listening...")
-		}
+		select {
+			case <- a.stop:
+				return
+			default:
+
+			buf := make([]byte,2049)
+			totalread := 0;
+			for totalread < 2049 {
+				n,_ := a.conn.Read(buf[totalread:])
+				totalread += n
+			}
+			packet := newpacket([2049]byte(buf))
+			if(packet.Type == 1){ //ack packet
+				a.ackchan <- packet
+			}
+		} 
 	}
 }
-func (a *agent) BeginListening() {
-	a.listening = true
-	a.stop = make(chan struct{});
-	fmt.Println("started listening to the upcoming messages")
-	go a.listen()
-}
+
 func (a* agent) Terminate() {
 	a.StopListening()
 	a.conn.Close()
