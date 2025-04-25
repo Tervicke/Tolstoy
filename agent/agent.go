@@ -2,13 +2,17 @@ package agent
 
 import (
 	"net"
+	"strings"
+	"errors"
+	"time"
 )
 
 type agent struct{
 	conn net.Conn
 	stop chan struct{}
 	listening bool //true - listening channel exists
-	ackchan chan packet
+	ackchan chan packet //publish ack channel
+	callbacks map[string]onMessage //map for the callbacks of various topics
 }
 
 func NewAgent(addr string) (*agent,  error) {
@@ -25,6 +29,32 @@ func NewAgent(addr string) (*agent,  error) {
 	return a,nil
 }
 
+type onMessage func(topic string, message string)
+
+func (a *agent) Subscribe(topic string , callback onMessage) (error){
+	buf := make([]byte,2049)
+	buf[0] = 5; 
+	copy(buf[1:1025] , []byte(topic))
+	a.conn.Write(buf[:])
+
+	select{
+	case ack := <- a.ackchan:
+		recieved_topic := strings.Trim(ack.Topic,"\x00")
+		if recieved_topic == topic{
+			if a.callbacks == nil{
+				a.callbacks = make(map[string]onMessage)
+			}
+			a.callbacks[topic] = callback
+			return nil
+		}else{
+			return errors.New(string(ack.Topic))
+		}
+	case <-time.After(3 * time.Second):
+		return errors.New("Did not recieve ack")
+	}
+}
+
+
 func (a* agent) listen(){
 	for{
 		select {
@@ -39,8 +69,14 @@ func (a* agent) listen(){
 				totalread += n
 			}
 			packet := newpacket([2049]byte(buf))
-			if(packet.Type == 10){ //ack code - 10 = publish ack 
-				a.ackchan <- packet
+			switch packet.Type{
+				case 10,11,12,2:
+					a.ackchan <- packet
+				case 3:
+					recieved_topic := strings.Trim(packet.Topic,"\x00")
+					if callback , exists := a.callbacks[recieved_topic] ; exists{
+						callback(packet.Topic , packet.Payload)
+					}
 			}
 		} 
 	}
