@@ -39,7 +39,7 @@ func (a* agent) listen(){
 				totalread += n
 			}
 			packet := newpacket([2049]byte(buf))
-			if(packet.Type == 1){ //ack packet
+			if(packet.Type == 10){ //ack code - 10 = publish ack 
 				a.ackchan <- packet
 			}
 		} 
