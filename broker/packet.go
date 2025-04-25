@@ -55,9 +55,9 @@ func newErrPacket(err string) [2049]byte{
 	copy(errpacket[1:], []byte(err))
 	return errpacket
 }
-func (p *Packet ) acknowledge(){
+func (p *Packet ) acknowledge(ackcode byte){
 	var ackpacket [2049]byte;
-	ackpacket[0] = 1;
+	ackpacket[0] = ackcode;
 	copy(ackpacket[1:1025], []byte(p.Topic))
 	copy(ackpacket[1025:], []byte(p.Payload))
 	p.Conn.Write(ackpacket[:])
