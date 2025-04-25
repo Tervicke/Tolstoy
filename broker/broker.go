@@ -11,6 +11,7 @@ var ActiveConnections = make(map[net.Conn]struct{})
 var Topics = make(map[string]map[net.Conn]struct{})
 
 func handleConnection(curCon net.Conn){
+	fmt.Println("agent joined")
 	defer curCon.Close()
 	ActiveConnections[curCon] = struct{}{}
 	for {
@@ -19,6 +20,7 @@ func handleConnection(curCon net.Conn){
 		for totalread < 2049 {
 			n , err := curCon.Read(buf[totalread:])
 			if err != nil{
+				fmt.Println("agent left")
 				delete(ActiveConnections ,curCon)
 				return;
 			}
