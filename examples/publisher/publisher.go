@@ -20,6 +20,7 @@ func main() {
 		os.Exit(1)
 	}
 	agent, err := agent.NewAgent(*addr)
+	fmt.Println("type exit to exit")
 	if err != nil {
 		panic(err)
 	}
