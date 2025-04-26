@@ -3,7 +3,7 @@ read the [specs](specs.md) to get a understanding of how the pub susb system .
 
 ## ToDo
 - [x] Make a simple demo publisher in Go
-- [ ] Make a simple demo subscriber in go
+- [x] Make a simple demo subscriber in go
 - [ ] Add baisc authentication in the topic access
 - [ ] Persistent storage of messages 
 - [ ] Write a small benchmark tool
