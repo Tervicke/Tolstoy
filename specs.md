@@ -1,5 +1,4 @@
 ## **Pub-Sub System Specifications**
-
 Each packet in the system is structured as follows:
 
 - **Type**: An integer representing the packet type.
@@ -70,4 +69,12 @@ Each packet in the system is structured as follows:
   **Fields**:
   - **Type**: 5
   - **Topic**: The topic to subscribe to
+  - **Payload**: Ignored
+  
+### 6. **Unsubscribe Packet**
+- **Description**: Sent by a client to unsubscribe to a topic, Will return an ack even if the client is not subscribed to the topic or the topic does not exist
+
+  **Fields**:
+  - **Type**: 6
+  - **Topic**: The topic to unsubscribe to
   - **Payload**: Ignored

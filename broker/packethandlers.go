@@ -10,7 +10,18 @@ type packetHandler func(packet Packet) bool
 var handlers = map[uint8]packetHandler{
 	4:handlePublishPacket, //handles the publish packet
 	5:handleSubscribePacket, //handles the subscribe packet
+	6:handleUnsubscribePacket,
 }
+func handleUnsubscribePacket(packet Packet) bool{
+	topicConnections , exists := Topics[packet.Topic]
+	if !exists{
+		return true
+	}
+	delete(topicConnections , packet.Conn)
+	packet.acknowledge(12) //subscribe ack
+	return true;//since no error
+}
+
 func handlePublishPacket(packet Packet) bool{
 	clients , exists := Topics[packet.Topic]
 	//if the topic doesnt exist create it 
