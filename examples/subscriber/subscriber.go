@@ -20,13 +20,16 @@ func main(){
 	}
 
 	agent,err:= agent.NewAgent(*addr)
-	fmt.Println("Press Ctrc+C to stop....")
+	fmt.Println("Press Ctrc+C to stop....\nEnter unsubscribe to unsubscribe")
 	if err != nil{
 		panic(err)
 	}
 	defer agent.Terminate()
 	err = agent.Subscribe(*topic, func(topic , message string){
 		fmt.Println("> ",message)
+		if message == "unsubscribe" {
+			agent.Unsubscribe(topic)
+		}
 	})
 	if err != nil{
 		fmt.Println(err)

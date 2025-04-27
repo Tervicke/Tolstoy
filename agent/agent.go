@@ -54,6 +54,13 @@ func (a *agent) Subscribe(topic string , callback onMessage) (error){
 	}
 }
 
+func (a *agent) Unsubscribe(topic string){
+	buf := make([]byte,2049) 
+	buf[0] = 6; 
+	copy(buf[1:1025] , []byte(topic))
+	a.conn.Write(buf[:])
+}
+
 
 func (a* agent) listen(){
 	for{
@@ -70,12 +77,14 @@ func (a* agent) listen(){
 			}
 			packet := newpacket([2049]byte(buf))
 			switch packet.Type{
-				case 10,11,12,2:
+				case 10,11,2:
 					a.ackchan <- packet
+				case 12:
+					return
 				case 3:
 					recieved_topic := strings.Trim(packet.Topic,"\x00")
 					if callback , exists := a.callbacks[recieved_topic] ; exists{
-						callback(packet.Topic , packet.Payload)
+						callback(strings.Trim(packet.Topic,"\x00"),strings.Trim(packet.Payload,"\x00"))
 					}
 			}
 		} 
