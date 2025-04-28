@@ -8,12 +8,9 @@ import (
 )
 
 func (a* agent) Publish(topic string , message string) error{
-	buf := make([]byte,2049)
-	buf[0] = 4; 
-	copy(buf[1:1025] , []byte(topic))
-	copy(buf[1025:2049] , []byte(message))
+	packet := makepacket(4,topic,message) //make a packet and then write it
 	go func() {
-        _, err := a.conn.Write(buf[:])
+        _, err := a.conn.Write(packet.tobytes())
         if err != nil {
 						fmt.Println("Error occured recieved wrong ack")
 						return

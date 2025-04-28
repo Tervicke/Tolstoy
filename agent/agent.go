@@ -3,15 +3,13 @@ package agent
 import (
 	"net"
 	"strings"
-	"errors"
-	"time"
 )
 
 type agent struct{
 	conn net.Conn
 	stop chan struct{}
 	listening bool //true - listening channel exists
-	ackchan chan packet //publish ack channel
+	ackchan chan Packet //publish ack channel
 	callbacks map[string]onMessage //map for the callbacks of various topics
 }
 
@@ -23,7 +21,7 @@ func NewAgent(addr string) (*agent,  error) {
 	a := &agent{
 		conn:   conn,
 		stop : make(chan struct{}), // Create the stop channel
-		ackchan:  make(chan packet),
+		ackchan:  make(chan Packet),
 	}
 	go a.listen()
 	return a,nil
@@ -31,34 +29,10 @@ func NewAgent(addr string) (*agent,  error) {
 
 type onMessage func(topic string, message string)
 
-func (a *agent) Subscribe(topic string , callback onMessage) (error){
-	buf := make([]byte,2049)
-	buf[0] = 5; 
-	copy(buf[1:1025] , []byte(topic))
-	a.conn.Write(buf[:])
-
-	select{
-	case ack := <- a.ackchan:
-		recieved_topic := strings.Trim(ack.Topic,"\x00")
-		if recieved_topic == topic{
-			if a.callbacks == nil{
-				a.callbacks = make(map[string]onMessage)
-			}
-			a.callbacks[topic] = callback
-			return nil
-		}else{
-			return errors.New(string(ack.Topic))
-		}
-	case <-time.After(3 * time.Second):
-		return errors.New("Did not recieve ack")
-	}
-}
 
 func (a *agent) Unsubscribe(topic string){
-	buf := make([]byte,2049) 
-	buf[0] = 6; 
-	copy(buf[1:1025] , []byte(topic))
-	a.conn.Write(buf[:])
+	unsubpacket := makepacket(6,topic,"")
+	a.conn.Write(unsubpacket.tobytes())
 }
 
 
@@ -101,3 +75,4 @@ func (a* agent) StopListening(){
 	}
 	a.listening = false
 }
+
