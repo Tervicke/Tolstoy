@@ -2,7 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 const addr string = "localhost:8080";
@@ -44,6 +48,7 @@ func handleConnection(curCon net.Conn){
 }
 
 func main() {
+	handleCrash()
 	broker , err := net.Listen("tcp" , addr);
 	if err != nil{
 		panic("Failed to start the broker")
@@ -58,4 +63,20 @@ func main() {
 		go handleConnection(conn);
 	}
 
+}
+
+func handleCrash(){
+
+	c := make(chan os.Signal , 1)
+	signal.Notify(c,os.Interrupt,syscall.SIGTERM)
+	go func(){
+		 <-c
+		log.Printf("Shutting Down..sending disconnection packets to all the %d agents",len(ActiveConnections))
+		dpacket := newDisconnectionPacket()
+		for conn := range ActiveConnections{
+			conn.Write(dpacket.toBytes())
+		}
+		log.Printf("Sent disconnection packets to all the %d agents",len(ActiveConnections))
+		os.Exit(0)
+	}()
 }

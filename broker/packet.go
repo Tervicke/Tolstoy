@@ -11,7 +11,9 @@ type ErrPacket struct{
 	Type uint8
 	Error string	
 }
-
+type DPacket struct{
+	Type int8
+}
 type Packet struct{
 	Conn net.Conn
 	Type uint8
@@ -63,3 +65,14 @@ func (p *Packet ) acknowledge(ackcode byte){
 	p.Conn.Write(ackpacket[:])
 }
 
+func newDisconnectionPacket() (DPacket){
+	dpacket := DPacket{
+		Type:-1,
+	}
+	return dpacket;
+}
+func (dp *DPacket) toBytes() []byte {
+	buf :=  make([]byte , 2049)
+	buf[0] = byte(dp.Type)
+	return buf
+}
