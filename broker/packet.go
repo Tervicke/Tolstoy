@@ -22,8 +22,8 @@ type Packet struct{
 }
 
 func newPacket(packetbuffer [2049]byte , conn net.Conn) Packet{
-	topicStr := string(packetbuffer[1:1025])        
-	payloadStr := string(packetbuffer[1025:2049])  
+	topicStr := strings.Trim(string(packetbuffer[1:1025]),"\x00")
+	payloadStr := strings.Trim(string(packetbuffer[1025:2049]),"\x00") 
 
 
 	strings.Trim(topicStr,"\x00")

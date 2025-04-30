@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net"
 )
 
@@ -29,7 +29,7 @@ func handlePublishPacket(packet Packet) bool{
 		Topics[packet.Topic] = make(map[net.Conn]struct{})
 	}
 	packet.acknowledge(10)
-	fmt.Println("acknowledged")
+	log.Println("Acknowledged")
 	for client := range clients{
 		packet.Type = 3 // change the packet type to indicating its a server sent packet
 		client.Write( packet.toBytes()  )
@@ -40,15 +40,16 @@ func handlePublishPacket(packet Packet) bool{
 
 func handleSubscribePacket(packet Packet) bool {
 	_ , exists := Topics[packet.Topic]
+
 	if !exists{
 		errorpacket := newErrPacket("Topic does not exist");
+		log.Printf("Sent Error packet for no topic %v\n",packet.Topic)
 		packet.Conn.Write(errorpacket[:]);
 		return false;
 	}
 	//add subscriber
 	Topics[packet.Topic][packet.Conn] = struct{}{}
-	fmt.Println("subscriber added")
-	fmt.Println("Topic-",packet.Topic)
+	log.Printf("New subscriber added to %s | count = %d\n",packet.Topic,len(Topics[packet.Topic]))
 	packet.acknowledge(11) //ack code - 11 for successful subscribe
 	return true
 }
