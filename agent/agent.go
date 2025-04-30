@@ -51,6 +51,8 @@ func (a* agent) listen(){
 			}
 			packet := newpacket([2049]byte(buf))
 			switch packet.Type{
+				case -1:
+					panic("Broker sent suddent disconnection request")
 				case 10,11,2:
 					a.ackchan <- packet
 				case 12:
