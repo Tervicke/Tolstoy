@@ -7,7 +7,7 @@ import (
 
 type packetHandler func(packet Packet) bool
 
-var handlers = map[uint8]packetHandler{
+var handlers = map[int8]packetHandler{
 	4:handlePublishPacket, //handles the publish packet
 	5:handleSubscribePacket, //handles the subscribe packet
 	6:handleUnsubscribePacket,

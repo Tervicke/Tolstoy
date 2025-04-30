@@ -8,7 +8,7 @@ import (
 //This is the Err packet that is sent by the broker when the handler finds and error in the request / message 
 //Error will contain the error as string and Type will be a error type
 type ErrPacket struct{
-	Type uint8
+	Type int8
 	Error string	
 }
 type DPacket struct{
@@ -16,7 +16,7 @@ type DPacket struct{
 }
 type Packet struct{
 	Conn net.Conn
-	Type uint8
+	Type int8
 	Topic string 
 	Payload string
 }
@@ -31,7 +31,7 @@ func newPacket(packetbuffer [2049]byte , conn net.Conn) Packet{
 
 	newpacket := Packet{
 		Conn: conn,
-		Type: uint8(packetbuffer[0]),
+		Type: int8(packetbuffer[0]),
 		Topic : topicStr,
 		Payload :payloadStr,
 	}
@@ -46,7 +46,7 @@ func (p *Packet) Print() {
 
 func (p *Packet) toBytes() []byte {
 	buf :=  make([]byte , 2049)
-	buf[0] = p.Type
+	buf[0] = byte(p.Type)
 	copy(buf[1:2025] , []byte(p.Topic))
 	copy(buf[1025:2049] , []byte(p.Payload))
 	return buf
