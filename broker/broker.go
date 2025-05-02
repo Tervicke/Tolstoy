@@ -108,6 +108,7 @@ func loadConfig(config_path string) () {
 	//check if the file exists
 	_ , err := os.Stat(config_path)
 	if os.IsNotExist(err){
+		fmt.Println(config_path)
 		log.Panicln("Couldnt find the config file")
 	}
 

@@ -1,8 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
+	"os"
+	"strconv"
+	"time"
 )
 
 type packetHandler func(packet Packet) bool
@@ -28,6 +32,17 @@ func handlePublishPacket(packet Packet) bool{
 	if !exists{
 		Topics[packet.Topic] = make(map[net.Conn]struct{})
 	}
+	//write it to the log file 
+	filename := getFileName(packet.Topic)
+	fmt.Println(filename)
+	file,err := os.OpenFile(filename , os.O_APPEND|os.O_CREATE|os.O_WRONLY , 0644)
+	if err != nil{
+		log.Printf("Error writing payload to log file %v",err)
+	}
+	_,err = file.Write([]byte(packet.Payload + "\n"))
+	if err != nil{
+		log.Println("Error writing to a file")
+	}
 	packet.acknowledge(10)
 	log.Println("Acknowledged")
 	for client := range clients{
@@ -52,4 +67,10 @@ func handleSubscribePacket(packet Packet) bool {
 	log.Printf("New subscriber added to %s | count = %d\n",packet.Topic,len(Topics[packet.Topic]))
 	packet.acknowledge(11) //ack code - 11 for successful subscribe
 	return true
+}
+
+func getFileName(topic_name string) string {
+	year , month , day :=time.Now().Date()
+	date := strconv.Itoa(year) + "-" + month.String() + "-"  +  strconv.Itoa(day);
+	return ( "data/topics/" + date + "-" + topic_name + ".log");
 }
