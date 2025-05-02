@@ -33,16 +33,7 @@ func handlePublishPacket(packet Packet) bool{
 		Topics[packet.Topic] = make(map[net.Conn]struct{})
 	}
 	//write it to the log file 
-	filename := getFileName(packet.Topic)
-	fmt.Println(filename)
-	file,err := os.OpenFile(filename , os.O_APPEND|os.O_CREATE|os.O_WRONLY , 0644)
-	if err != nil{
-		log.Printf("Error writing payload to log file %v",err)
-	}
-	_,err = file.Write([]byte(packet.Payload + "\n"))
-	if err != nil{
-		log.Println("Error writing to a file")
-	}
+	WriteMessage(packet.Payload, packet.Topic)
 	packet.acknowledge(10)
 	log.Println("Acknowledged")
 	for client := range clients{
@@ -69,8 +60,26 @@ func handleSubscribePacket(packet Packet) bool {
 	return true
 }
 
-func getFileName(topic_name string) string {
-	year , month , day :=time.Now().Date()
+func WriteMessage(payload string , topic_name string){
+	if !brokerSettings.Persistence.Enabled {
+		return
+	}
+	filename := getFilePath(topic_name)
+	file,err := os.OpenFile(filename , os.O_APPEND|os.O_CREATE|os.O_WRONLY , 0644)
+	if err != nil{
+		log.Printf("Error writing payload to log file %v",err)
+	}
+
+	_,err = file.Write([]byte(payload + "\n"))
+
+	if err != nil{
+		log.Println("Error writing to a file")
+	}
+
+}
+func getFilePath(topic_name string) string {
+
+	year , month , day := time.Now().Date()
 	date := strconv.Itoa(year) + "-" + month.String() + "-"  +  strconv.Itoa(day);
-	return ( "data/topics/" + date + "-" + topic_name + ".log");
+	return (brokerSettings.Persistence.Directory + date + "-" + topic_name + ".log")
 }

@@ -3,7 +3,7 @@ Host: "localhost"
 Topics:
   - "mytopic"
   - "anothertopic"
-Perisistence:
-  Enabled: true
+Persistence:
+  Enabled: false 
   Directory: "broker/data/topics/"
     

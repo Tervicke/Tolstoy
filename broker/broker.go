@@ -9,8 +9,6 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
-
-	"gopkg.in/yaml.v3"
 )
 
 //make a map of net Conn and struct (because 0 bytes) //simulate a set
@@ -20,6 +18,18 @@ var Topics = make(map[string]map[net.Conn]struct{})
 //host and port 
 var Host = "localhost"
 var Port = "8080"
+
+type configdata struct{
+		Port int  `yaml:"Port"`
+		Host string `yaml:"Host"`
+		Topics []string `yaml:"Topics"`
+		Persistence struct{ 
+			Enabled bool `yaml:"Enabled"`
+			Directory string `yaml:"Directory"`
+		} `yaml:"Persistence"`
+}
+
+var brokerSettings configdata;
 
 func handleConnection(curCon net.Conn){
 	log.Println("New Agent joined")
@@ -64,7 +74,7 @@ func main() {
 
 	loadConfig(*config_path)
 
-	addr := Host + ":" + Port
+	addr := brokerSettings.Host + ":" + strconv.Itoa(brokerSettings.Port)
 
 	broker , err := net.Listen("tcp" , addr);
 
@@ -104,39 +114,3 @@ func handleCrash(){
 	}()
 }
 
-func loadConfig(config_path string) () {
-	//check if the file exists
-	_ , err := os.Stat(config_path)
-	if os.IsNotExist(err){
-		fmt.Println(config_path)
-		log.Panicln("Couldnt find the config file")
-	}
-
-	//parse the config
-
-	type configdata struct {
-		Port int  `yaml:"Port"`
-		Host string `yaml:"Host"`
-		Topics []string `yaml:"Topics"`
-	} 
-
-	var config configdata
-	config_file,_ := os.ReadFile(config_path)
-
-	err = yaml.Unmarshal( config_file , &config)
-
-	if err != nil{
-		log.Panicf("Failed to parse the error %v",err)
-	}
-
-	//set the port and host
-	Host = config.Host
-	Port = strconv.Itoa(config.Port)
-
-	//add the predefine the topics
-	for _,topicname := range config.Topics{
-		Topics[topicname] = make(map[net.Conn]struct{}) 
-	}
-
-	log.Println("Loaded config succesfully")
-}
