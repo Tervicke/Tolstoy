@@ -6,3 +6,6 @@ publisher:
 
 subscriber:
 	go run examples/subscriber/subscriber.go -addr "localhost:8080" -topic "mytopic"
+
+test:
+	go run testing/test.go
