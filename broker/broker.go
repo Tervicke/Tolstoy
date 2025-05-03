@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"strconv"
@@ -65,6 +67,12 @@ func handleConnection(curCon net.Conn){
 }
 
 func main() {
+
+	go func(){
+		log.Println("Pprof listening at http://localhost:6060/debug/pprof/")
+		log.Println(http.ListenAndServe("localhost:6060",nil))
+	}()
+
 	handleCrash()
 
 	config_path := flag.String("config" , "config.yaml" ,"The path to the config.yaml file \n by default it searches the current directory")                              
@@ -83,6 +91,8 @@ func main() {
 	}
 
 	log.Printf("Server started on %s \n",addr)
+	//start profiling 
+
 
 	//server starts and then the config is loaded 
 
