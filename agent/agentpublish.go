@@ -18,7 +18,6 @@ func (a* agent) Publish(topic string , message string) error{
 		recieved_topic := strings.Trim(ack.Topic,"\x00")
 		recieved_message := strings.Trim(ack.Payload,"\x00")
 		if recieved_topic == topic && recieved_message == message{
-			fmt.Println("recieved ack")
 			return nil
 		}else{
 			fmt.Printf("expected - %s - recieved - %s\n",topic ,recieved_topic)
