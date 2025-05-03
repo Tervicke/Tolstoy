@@ -23,9 +23,9 @@ make subscriber
 - [x] Make a simple demo publisher in Go
 - [x] Make a simple demo subscriber in go
 - [ ] Add baisc authentication in the topic access
-- [ ] Persistent storage of messages 
+- [x] Persistent storage of messages 
 - [ ] Write a small benchmark tool
-- [ ] Add logging
-- [ ] better readme and build & run instructions
+- [x] Add logging
+- [x] better readme and build & run instructions
 
 
