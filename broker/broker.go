@@ -34,9 +34,9 @@ type configdata struct{
 var brokerSettings configdata;
 
 func handleConnection(curCon net.Conn){
-	log.Println("New Agent joined")
 	defer curCon.Close()
 	ActiveConnections[curCon] = struct{}{}
+	log.Printf("New Agent joined , count - %d\n", len(ActiveConnections))
 	for {
 		buf := make([]byte,2049)
 		totalread := 0;
