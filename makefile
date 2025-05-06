@@ -1,3 +1,4 @@
+.PHONY : benchmark
 runbroker:
 	go run broker/*.go -config broker/config.yaml
 
@@ -7,8 +8,5 @@ publisher:
 subscriber:
 	go run examples/subscriber/subscriber.go -addr "localhost:8080" -topic "mytopic"
 
-testlatencypub:
-	go run testing/latencytesting/publisher/publisher.go
-
-testlatencysub:
-	go run testing/latencytesting/subscriber/subscriber.go
+benchmark:
+	go run benchmark/*.go
