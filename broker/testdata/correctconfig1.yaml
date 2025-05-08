@@ -1,0 +1,9 @@
+Port: 8080
+Host: "localhost"
+Topics:
+  - "mytopic"
+  - "anothertopic"
+Persistence:
+  Enabled: false 
+  Directory: "broker/data/topics/"
+    

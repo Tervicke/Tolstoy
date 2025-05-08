@@ -30,8 +30,11 @@ type configdata struct{
 			Directory string `yaml:"Directory"`
 		} `yaml:"Persistence"`
 }
-
-var brokerSettings configdata;
+//default data to be overwritten when loadconfig runs
+var brokerSettings = configdata{
+	Port: -1,
+	Host:"",
+};
 
 func handleConnection(curCon net.Conn){
 	defer curCon.Close()
@@ -80,7 +83,11 @@ func main() {
 	
 	//check if the config_path exists
 
-	loadConfig(*config_path)
+	err := loadConfig(*config_path)
+
+	if err != nil{
+		log.Panicf("Error occured %v",err)
+	}
 
 	addr := brokerSettings.Host + ":" + strconv.Itoa(brokerSettings.Port)
 
