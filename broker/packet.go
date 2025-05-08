@@ -16,7 +16,7 @@ type DPacket struct{
 }
 type Packet struct{
 	Conn net.Conn
-	Type int8
+	Type uint8
 	Topic string 
 	Payload string
 }
@@ -31,7 +31,7 @@ func newPacket(packetbuffer [2049]byte , conn net.Conn) Packet{
 
 	newpacket := Packet{
 		Conn: conn,
-		Type: int8(packetbuffer[0]),
+		Type: uint8(packetbuffer[0]),
 		Topic : topicStr,
 		Payload :payloadStr,
 	}
