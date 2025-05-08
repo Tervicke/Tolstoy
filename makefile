@@ -1,6 +1,6 @@
 .PHONY : benchmark
 runbroker:
-	go run broker/*.go -config broker/config.yaml
+	go run $(shell find broker -name '*.go' ! -name '*_test.go') -config broker/config.yaml
 
 publisher:
 	go run examples/publisher/publisher.go -addr "localhost:8080" -topic "mytopic"
@@ -10,3 +10,6 @@ subscriber:
 
 benchmark:
 	go run benchmark/*.go
+
+testbroker:
+	go test -v ./broker
