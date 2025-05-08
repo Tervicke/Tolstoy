@@ -12,7 +12,7 @@ func loadConfig(config_path string) (error) {
 	//check if the file exists
 	_ , err := os.Stat(config_path)
 	if os.IsNotExist(err){
-		log.Panic("Couldnt find the config file")
+		return errors.New("could not find the config file")
 	}
 
 	config_file,_ := os.ReadFile(config_path)
@@ -20,7 +20,7 @@ func loadConfig(config_path string) (error) {
 	err = yaml.Unmarshal( config_file , &brokerSettings)
 
 	if err != nil{
-		log.Panicf("Failed to parse the error %v",err)
+		return err
 	}
 
 	if brokerSettings.Port == -1{

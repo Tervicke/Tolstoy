@@ -1,0 +1,8 @@
+Port: 8080
+Topics:-
+  - "mytopic"
+  - "anothertopic"
+Persistence:
+  Enabled: false 
+  Directory: "broker/data/topics/"
+    

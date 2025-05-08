@@ -5,25 +5,6 @@ import (
 	"testing"
 )
 
-func TestLoadConfigPanicWhenFileMissing(t *testing.T){
-
-	config_file_path := "broker/testdata/noconfig.yaml"
-	expected := "Couldnt find the config file"
-	defer func(){
-		if actual := recover(); actual == nil{
-			t.Errorf("Expected panic when config is missing")
-		}else if actual != expected{
-			t.Errorf("Expected panic %q but got %q", expected, actual)
-		}else{
-			t.Logf("recovered from a expected panic %q",expected)
-		}
-	}()
-
-	//load config should panic with noconfig.yaml file
-	loadConfig(config_file_path)
-	t.Logf("recovered from a expected panic %q",expected)
-}
-
 func TestLoadConfig(t *testing.T) {
 
 	type testCase struct{
@@ -48,6 +29,16 @@ func TestLoadConfig(t *testing.T) {
 			configpath: "testdata/correctconfig1.yaml",
 			expected: nil,
 		},
+		{
+			name : "test config file doesnt exist",
+			configpath: "",
+			expected: errors.New("could not find the config file"),
+		},
+		{
+			name : "test error parsing the config yaml",
+			configpath: "testdata/incorrectyaml.yaml",
+			expected: errors.New("yaml: line 2: could not find expected ':'"),
+		},
 	}
 	
 	for _,tt := range tests{
@@ -69,6 +60,5 @@ func TestLoadConfig(t *testing.T) {
 			}
 		})
 	}
-
+	
 }
-
