@@ -12,4 +12,4 @@ benchmark:
 	go run benchmark/*.go
 
 testbroker:
-	go test -v ./broker
+	gotestsum --format=short-verbose -- -cover ./broker
