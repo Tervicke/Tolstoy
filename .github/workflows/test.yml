@@ -1,4 +1,4 @@
-name: Run make testall
+name: Run tests with make
 
 on:
   push:
@@ -10,9 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Run make testall
-      run: make testall
+      - name: Display working directory
+        run: pwd  # Shows the current working directory
 
+      - name: List files in the repository
+        run: ls -alh  # List all files to ensure Makefile is present
+
+      - name: Run make testall
+        run: make testall
