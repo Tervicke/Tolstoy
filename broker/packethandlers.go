@@ -37,7 +37,12 @@ func handlePublishPacket(packet Packet) bool{
 	log.Println("Acknowledged")
 	for client := range clients{
 		packet.Type = 3 // change the packet type to indicating its a server sent packet
+		var emptybytearray [2049]byte;
 		packetbytes := packet.toBytes()
+		if packetbytes == emptybytearray {
+			log.Println("Ignored a empty packet")
+			return false
+		}
 		client.Write( packetbytes[:] )
 	}
 	//publish ack_code = 10

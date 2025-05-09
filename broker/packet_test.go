@@ -75,7 +75,12 @@ func TestToBytes(t *testing.T) {
 			name : "test empty payload",
 			expectedtype : 1,
 			expectedtopic : "Test Topic",
-			expectedpayload : "", //empty payload
+			expectedpayload : "",
+		},
+		{
+			name : "test everything empty",
+			expectedtopic : "",
+			expectedpayload : "", 
 		},
 	}		
 	for _,tt := range tests{
