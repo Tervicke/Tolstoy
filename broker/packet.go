@@ -44,8 +44,9 @@ func (p *Packet) Print() {
 	fmt.Printf("Payload: %s\n", p.Payload)
 }
 
-func (p *Packet) toBytes() []byte {
-	buf :=  make([]byte , 2049)
+func (p *Packet) toBytes() [2049]byte {
+	//buf :=  make([]byte , 2049)
+	var buf [2049]byte
 	buf[0] = byte(p.Type)
 	copy(buf[1:2025] , []byte(p.Topic))
 	copy(buf[1025:2049] , []byte(p.Payload))

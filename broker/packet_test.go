@@ -5,14 +5,15 @@ import (
 	"testing"
 )
 
+type testcase struct{
+	name string 
+	expectedtype uint8
+	expectedtopic string
+	expectedpayload string
+}
+
 func TestNewPacket(t *testing.T){
 	
-	type testcase struct{
-		name string 
-		expectedtype uint8
-		expectedtopic string
-		expectedpayload string
-	}
 	tests := []testcase{
 		{
 			name : "test all filled input fields",
@@ -55,3 +56,40 @@ func TestNewPacket(t *testing.T){
 	}
 }
 
+func TestToBytes(t *testing.T) {
+
+	tests := []testcase{
+		{
+			name : "test all filled input fields",
+			expectedtype : 1,
+			expectedtopic : "Test Topic" ,
+			expectedpayload : "Test Payload",
+		},
+		{
+			name : "test empty topic",
+			expectedtype : 1,
+			expectedtopic : "",
+			expectedpayload : "Test Payload",
+		},
+		{
+			name : "test empty payload",
+			expectedtype : 1,
+			expectedtopic : "Test Topic",
+			expectedpayload : "", //empty payload
+		},
+	}		
+	for _,tt := range tests{
+		var exptectedbuf[2049]byte
+		exptectedbuf[0] = tt.expectedtype
+		copy(exptectedbuf[1:1025],tt.expectedtopic)
+		copy(exptectedbuf[1025:2049],tt.expectedpayload)
+		dummyconnection,_ := net.Pipe()
+		newpacket := newPacket(exptectedbuf,dummyconnection)
+		t.Run(tt.name , func(t *testing.T) {
+			actualbuf := newpacket.toBytes()
+			if actualbuf != exptectedbuf {
+				t.Errorf("Expected buf was different than the actualbuf")
+			}
+		})
+	}
+}

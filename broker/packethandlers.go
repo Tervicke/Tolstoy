@@ -37,7 +37,8 @@ func handlePublishPacket(packet Packet) bool{
 	log.Println("Acknowledged")
 	for client := range clients{
 		packet.Type = 3 // change the packet type to indicating its a server sent packet
-		client.Write( packet.toBytes()  )
+		packetbytes := packet.toBytes()
+		client.Write( packetbytes[:] )
 	}
 	//publish ack_code = 10
 	return true
