@@ -58,9 +58,15 @@ func newErrPacket(err string) [2049]byte{
 	copy(errpacket[1:], []byte(err))
 	return errpacket
 }
-func (p *Packet ) acknowledge(ackcode byte){
+func (p *Packet ) acknowledge(){
+	var ackcodes = make(map[uint8]uint8)
+
+	ackcodes[4] = 10 //publish ack
+	ackcodes[5] = 11 //subscribe ack
+	ackcodes[6] = 12 //unsubscribe ack
+
 	var ackpacket [2049]byte;
-	ackpacket[0] = ackcode;
+	ackpacket[0] = ackcodes[p.Type]; //get the ack code based on the packet type
 	copy(ackpacket[1:1025], []byte(p.Topic))
 	copy(ackpacket[1025:], []byte(p.Payload))
 	p.Conn.Write(ackpacket[:])

@@ -124,3 +124,68 @@ func TestNewErrPacket(t *testing.T){
 		})
 	}
 }
+
+func TestAcknowledge(t *testing.T){
+	type testcase struct{
+		name string
+		packetype uint8
+		expectedtype uint8
+		expectedtopic string
+		expectedpayload string 
+	}
+	tests := []testcase{
+		{
+			name : "test publish ack",
+			packetype: 4,
+			expectedtype: 10,
+			expectedtopic: "test topic",
+			expectedpayload: "publish payload",
+		},
+		{
+			name : "test subscribe ack",
+			packetype: 5,
+			expectedtype: 11,
+			expectedtopic: "test topic",
+			expectedpayload: "subscribe payload",
+		},
+		{
+			name : "test unsubscribe ack",
+			packetype: 6,
+			expectedtype: 12,
+			expectedtopic: "test topic",
+			expectedpayload: "unsubscribe payload",
+		},
+	}
+	packetconn , verifyconn := 	net.Pipe()
+
+	defer packetconn.Close()
+	defer verifyconn.Close() 
+
+	for _,tt := range tests{
+		tt := tt
+
+		t.Run(tt.name , func(t *testing.T) {
+			var expectedbuf [2049]byte
+			expectedbuf[0] = tt.packetype
+			copy(expectedbuf[1:1025],tt.expectedtopic)
+			copy(expectedbuf[1:1025],tt.expectedpayload)
+			newpacket := newPacket(expectedbuf,packetconn)
+			go newpacket.acknowledge()
+			var actualbuf [2049]byte;
+			_,err := verifyconn.Read(actualbuf[:])
+
+			if err != nil{
+				t.Errorf("error reading the ack packet")
+			}
+
+			//update the expected buf to change the expected type
+			expectedbuf[0] = tt.expectedtype
+
+			if actualbuf != expectedbuf {
+				t.Errorf("Did not recieve exact acknowledge packet")
+			}
+
+		})
+	}
+	
+}

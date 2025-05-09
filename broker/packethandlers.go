@@ -21,7 +21,7 @@ func handleUnsubscribePacket(packet Packet) bool{
 		return true
 	}
 	delete(topicConnections , packet.Conn)
-	packet.acknowledge(12) //subscribe ack
+	packet.acknowledge() //subscribe ack
 	return true;//since no error
 }
 
@@ -33,7 +33,7 @@ func handlePublishPacket(packet Packet) bool{
 	}
 	//write it to the log file 
 	WriteMessage(packet.Payload, packet.Topic)
-	packet.acknowledge(10)
+	packet.acknowledge()
 	log.Println("Acknowledged")
 	for client := range clients{
 		packet.Type = 3 // change the packet type to indicating its a server sent packet
@@ -61,7 +61,7 @@ func handleSubscribePacket(packet Packet) bool {
 	//add subscriber
 	Topics[packet.Topic][packet.Conn] = struct{}{}
 	log.Printf("New subscriber added to %s | count = %d\n",packet.Topic,len(Topics[packet.Topic]))
-	packet.acknowledge(11) //ack code - 11 for successful subscribe
+	packet.acknowledge() //ack code - 11 for successful subscribe
 	return true
 }
 
