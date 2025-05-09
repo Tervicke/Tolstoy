@@ -1,6 +1,8 @@
 # A lightweight pub sub system written in golang 
 read the [specs](specs.md) to get a understanding of how the pub sub protocol.
 
+![Tests](https://github.com/tervicke/Tolstoy/actions/workflows/test.yml/badge.svg)
+
 ##  Running the example
 TO run the example follow these steps 
 1. Start the main broker
