@@ -98,3 +98,29 @@ func TestToBytes(t *testing.T) {
 		})
 	}
 }
+
+func TestNewErrPacket(t *testing.T){
+	type testcase struct{
+		name string
+		expectedtype uint8
+		expected string
+	}
+	tests := []testcase{
+		{
+			name: "test invalid topic",
+			expectedtype: 2,
+			expected: "Topic does not exist",
+		},
+	} 
+	for _,tt := range tests{
+		t.Run(tt.name , func(t *testing.T){
+			var expectedbuf [2049]byte;
+			expectedbuf[0] = tt.expectedtype
+			copy(expectedbuf[1:],tt.expected)
+			actualbuf := newErrPacket(tt.expected)
+			if actualbuf != expectedbuf{
+				t.Errorf("Expected Error packet not got")
+			}
+		})
+	}
+}
