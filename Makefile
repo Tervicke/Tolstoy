@@ -18,5 +18,5 @@ inttest:
 	go test -v -cover ./test
 
 testall:
-	make testbroker
-	make inttest
+	go test -v -cover ./broker
+	go test -v -cover ./test
