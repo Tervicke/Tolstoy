@@ -12,10 +12,10 @@ benchmark:
 	go run benchmark/*.go
 
 testbroker:
-	gotestsum --format=short-verbose -- -cover ./broker
+	go test -v -cover ./broker
 
 inttest:
-	gotestsum --format=short-verbose -- -cover ./test
+	go test -v -cover ./test
 
 testall:
 	make testbroker
