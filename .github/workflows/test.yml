@@ -12,12 +12,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Display working directory
-        run: pwd  # Shows the current working directory
-
-      - name: List files in the repository
-        run: ls -alh  # List all files to ensure Makefile is present
-
+        
       - name: Run make testall
         run: make testall
