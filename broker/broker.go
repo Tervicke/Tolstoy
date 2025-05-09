@@ -1,4 +1,4 @@
-package main
+package broker
 
 import (
 	"flag"
@@ -69,8 +69,7 @@ func handleConnection(curCon net.Conn){
 	}
 }
 
-func main() {
-
+func StartServer(){
 	go func(){
 		log.Println("Pprof listening at http://localhost:6060/debug/pprof/")
 		log.Println(http.ListenAndServe("localhost:6060",nil))
@@ -112,7 +111,6 @@ func main() {
 
 		go handleConnection(conn);
 	}
-
 }
 
 func handleCrash(){
