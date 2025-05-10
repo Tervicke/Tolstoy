@@ -70,7 +70,11 @@ func WriteMessage(payload string , topic_name string){
 	if !brokerSettings.Persistence.Enabled {
 		return
 	}
-	filename := getFilePath(topic_name)
+	filepath := getFilePath(topic_name)
+	Writetofile(payload , filepath)
+
+}
+func Writetofile(payload , filename string ){
 	file,err := os.OpenFile(filename , os.O_APPEND|os.O_CREATE|os.O_WRONLY , 0644)
 	if err != nil{
 		log.Printf("Error writing payload to log file %v",err)
@@ -81,7 +85,6 @@ func WriteMessage(payload string , topic_name string){
 	if err != nil{
 		log.Println("Error writing to a file")
 	}
-
 }
 func getFilePath(topic_name string) string {
 

@@ -1,7 +1,9 @@
 package broker
 
 import (
+	"bytes"
 	"net"
+	"os"
 	"strings"
 	"testing"
 )
@@ -249,4 +251,33 @@ func testAck(actualack , expectedack  [2049]byte , t *testing.T){
 		t.Errorf("ack payload mismatch expected %s got %s",expected_payload,actual_payload)
 
 	} 
+}
+
+func TestWriteToFile(t *testing.T){
+	//reset the file and write "already in file" and then append the sample payload
+	//write sample payload in a topic testdata/samplefile
+	FilePath := "testdata/sampletopiclog.log" 
+	file, err := os.Create(FilePath)
+	if err != nil {
+		t.Fatalf("Error opening the sample log file")
+	}
+	const existing_payload = "Existing payload\n"
+	const sample_payload = "sample payload"
+	expected_content := []byte(existing_payload + sample_payload + "\n")
+	file.Write([]byte(existing_payload))
+
+	file.Close()
+	//action
+	Writetofile(sample_payload , FilePath)
+
+	actual_content , err := os.ReadFile(FilePath)
+
+	if err != nil {
+		t.Fatalf("failed to read the sample file\n")
+	}
+
+	if !bytes.Equal(actual_content,expected_content) {
+		t.Errorf("Expected content %q , but got %q",expected_content,actual_content)
+	}
+
 }
