@@ -1,4 +1,4 @@
-name: Run tests with make
+name: Test Results
 
 on:
   push:
