@@ -33,7 +33,6 @@ func handlePublishPacket(packet Packet) bool{
 	}
 	//write it to the log file 
 	WriteMessage(packet.Payload, packet.Topic)
-	packet.acknowledge()
 	log.Println("Acknowledged")
 	for client := range clients{
 		packet.Type = 3 // change the packet type to indicating its a server sent packet
@@ -45,7 +44,9 @@ func handlePublishPacket(packet Packet) bool{
 		}
 		client.Write( packetbytes[:] )
 	}
+
 	//publish ack_code = 10
+	packet.acknowledge()
 	return true
 }
 

@@ -148,5 +148,47 @@ func TestPacketHandlerWithUnsubscribePacket(t *testing.T){
 }
 
 func TestPacketHandlerWithPublishePacket(t *testing.T){
-	//TODO
+	const (
+		expected_topic = "hello-topic"
+		expected_payload = "hello-payload"
+	)
+	pubbyte:= makepacketbyte(4,expected_topic,expected_payload)
+	conn1,conn2 := net.Pipe()
+	defer conn1.Close()
+	defer conn2.Close()
+
+	ackCh := make(chan [2049]byte)
+	go func(){
+		var ack [2049]byte
+		_,err := conn2.Read(ack[:])
+		if err != nil {
+			t.Errorf("failed to read pubish ack")
+		}
+		ackCh<-ack
+	}()
+
+	pubpacket := newPacket(pubbyte , conn1)
+	//test handler functions exists for pubpacket
+	handlerfunction , exists := handlers[pubpacket.Type]
+	if !exists{
+		t.Fatalf("Handler function expected did not find")
+	}
+	//action
+	sent := handlerfunction(pubpacket)
+	if !sent{
+		t.Errorf("Handlerfunction returns false expected true")
+	}
+	ack := <-ackCh
+	if ack[0] != 10 {
+		t.Errorf("ack type mismatch %d",ack[0])
+	} 
+	actual_topic := strings.Trim(string(ack[1:1025]),"\x00")
+	if actual_topic != expected_topic {
+		t.Errorf("ack topic mismatch")
+	} 
+	actual_payload := strings.Trim(string(ack[1025:2049]),"\x00")
+	if actual_payload != expected_payload{
+		t.Errorf("ack payload mismatch")
+	} 
+
 }
