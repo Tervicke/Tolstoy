@@ -83,3 +83,12 @@ func (dp *DPacket) toBytes() []byte {
 	buf[0] = byte(dp.Type)
 	return buf
 }
+
+func makepacketbyte(Type uint8 , Topic , Payload string ) ( [2049]byte ) {
+	var packetbyte [2049]byte
+	packetbyte[0] = Type
+	copy(packetbyte[1:1025],Topic)
+	copy(packetbyte[1025:2049],Payload)
+	return packetbyte
+}
+

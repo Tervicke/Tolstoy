@@ -189,3 +189,43 @@ func TestAcknowledge(t *testing.T){
 	}
 	
 }
+func TestMakePacketByte(t *testing.T) {
+
+	tests := []testcase{
+		{
+			name : "test all filled input fields",
+			expectedtype : 1,
+			expectedtopic : "Test Topic" ,
+			expectedpayload : "Test Payload",
+		},
+		{
+			name : "test empty topic",
+			expectedtype : 1,
+			expectedtopic : "",
+			expectedpayload : "Test Payload",
+		},
+		{
+			name : "test empty payload",
+			expectedtype : 1,
+			expectedtopic : "Test Topic",
+			expectedpayload : "",
+		},
+		{
+			name : "test everything empty",
+			expectedtopic : "",
+			expectedpayload : "", 
+		},
+	}		
+	for _,tt := range tests{
+		var expectedbuf[2049]byte
+		expectedbuf[0] = tt.expectedtype
+		copy(expectedbuf[1:1025],tt.expectedtopic)
+		copy(expectedbuf[1025:2049],tt.expectedpayload)
+		actualbuf := makepacketbyte(tt.expectedtype, tt.expectedtopic , tt.expectedpayload)
+		if actualbuf != expectedbuf{
+			t.Errorf("Did not recieve the exact actual buf")
+		}
+
+	}
+
+}
