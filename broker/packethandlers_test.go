@@ -27,14 +27,14 @@ func TestPacketHandlerWithSubscribePacket(t *testing.T){
 	t.Run("test subpacket with a valid topic" , func(t *testing.T) {
 
 		const (
-			topic = "test-topic"
-			payload = "test-payload will get ignored"
+			expected_topic = "test-topic"
+			expected_payload = "test-payload will get ignored"
 		)
 
 		var buf [2049]byte;
 		buf[0] = 5
-		copy(buf[1:1025],topic)
-		copy(buf[1025:2049],payload)
+		copy(buf[1:1025],expected_topic)
+		copy(buf[1025:2049],expected_payload)
 		conn1,conn2  := net.Pipe()  
 		defer conn2.Close()
 		defer conn1.Close()
@@ -67,23 +67,13 @@ func TestPacketHandlerWithSubscribePacket(t *testing.T){
 			t.Errorf("Expected added to be %t found %t",true,added)
 		}
 		//make sure the connection exists
-		_,contains := Topics[topic][subpacket.Conn]
+		_,contains := Topics[expected_topic][subpacket.Conn]
 		if contains != true{
 			t.Errorf("contains expected %t got %t",true,contains)
 		}
 		ack := <-ackCh
-		if ack[0]  != 11{
-			t.Errorf("Incorrect ack type recieved expected %d got %d",10,ack[0])
-		}
-		actual_topic := strings.Trim(string(ack[1:1025]),"\x00")
-		if  actual_topic != topic {
-			t.Errorf("Topic mismatch E:%s G:%s",topic,actual_topic)
-		}
-		actual_payload := strings.Trim(string(ack[1025:2049]),"\x00")
-		if actual_payload != payload {
-			t.Errorf("Payload mismatch E:%s G:%s",payload,actual_payload)
-		}
-
+		expectedack := makepacketbyte(11,expected_topic,expected_payload)
+		testAck(ack,expectedack,t)
 	})
 
 	//test with invalid topic
@@ -140,11 +130,64 @@ func TestPacketHandlerWithSubscribePacket(t *testing.T){
 		if errorpacket != ack{
 			t.Errorf("Expected error packet did not found")
 		}
+
 	})
 }
 
 func TestPacketHandlerWithUnsubscribePacket(t *testing.T){
-	//TODO
+	const (
+		expected_topic = "test topic"
+		expected_payload = "test payload"
+	)
+	unsubbytes:= makepacketbyte(6,expected_topic,expected_payload)
+
+	conn1, conn2 := net.Pipe()
+
+	defer conn1.Close()
+	defer conn2.Close()
+
+	ackCh := make(chan [2049]byte)
+	//read ack and pass it to ack channel	
+	go func(){
+		var ack [2049]byte
+		_,err := conn2.Read(ack[:])
+		if err != nil{
+			t.Errorf("Failed to read ack")
+		}
+		ackCh<-ack
+	}()
+
+	unsubpacket := newPacket(unsubbytes,conn1)
+	//check if the function handler works for the unsubpacket
+	handlerfunction , exists :=  handlers[unsubpacket.Type]
+
+	if !exists{
+		t.Fatal("handler function expected for the unsubpacket type")
+	}
+	//make the topic and add the net connection to the list of topics first 	
+	Topics[unsubpacket.Topic] = make(map[net.Conn]struct{})
+	Topics[unsubpacket.Topic][unsubpacket.Conn] = struct{}{}
+
+
+	_ , exists  = Topics[unsubpacket.Topic][unsubpacket.Conn]
+
+	if !exists {
+		t.Error("Error when trying to add connection to the topics")
+	}
+
+	//action
+	response := handlerfunction(unsubpacket)
+	if !response {
+		t.Errorf("response not true for valid unsubpacket")
+	}
+	_ , exists = Topics[unsubpacket.Topic][unsubpacket.Conn]
+
+	if exists {
+		t.Errorf("Conn not deleted ")
+	}
+	ack := <-ackCh
+	expectedack := makepacketbyte(12,expected_topic,expected_payload)
+	testAck(ack,expectedack,t)
 }
 
 func TestPacketHandlerWithPublishePacket(t *testing.T){
@@ -179,16 +222,31 @@ func TestPacketHandlerWithPublishePacket(t *testing.T){
 		t.Errorf("Handlerfunction returns false expected true")
 	}
 	ack := <-ackCh
-	if ack[0] != 10 {
-		t.Errorf("ack type mismatch %d",ack[0])
-	} 
-	actual_topic := strings.Trim(string(ack[1:1025]),"\x00")
-	if actual_topic != expected_topic {
-		t.Errorf("ack topic mismatch")
-	} 
-	actual_payload := strings.Trim(string(ack[1025:2049]),"\x00")
-	if actual_payload != expected_payload{
-		t.Errorf("ack payload mismatch")
+
+	expectedack := makepacketbyte(10,expected_topic,expected_payload)
+
+	testAck(ack,expectedack,t)
+}
+
+//helper function to test ack
+func testAck(actualack , expectedack  [2049]byte , t *testing.T){
+
+	actual_type := actualack[0]
+	expected_type := expectedack[0]
+	if actual_type != expected_type{
+		t.Errorf("ack type mismatch expected %d got %d",expected_type , actual_type)
 	} 
 
+	actual_topic := strings.Trim(string(actualack[1:1025]),"\x00")
+	expected_topic := strings.Trim(string(expectedack[1:1025]),"\x00")
+	if actual_topic != expected_topic {
+		t.Errorf("ack topic mismatch expected %s got %s",expected_topic,actual_topic)
+	} 
+
+	actual_payload := strings.Trim(string(actualack[1025:2049]),"\x00")
+	expected_payload:= strings.Trim(string(expectedack[1025:2049]),"\x00")
+	if actual_payload != expected_payload{
+		t.Errorf("ack payload mismatch expected %s got %s",expected_payload,actual_payload)
+
+	} 
 }
