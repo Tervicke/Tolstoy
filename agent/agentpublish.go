@@ -20,9 +20,7 @@ func (a* agent) Publish(topic string , message string) error{
 		if recieved_topic == topic && recieved_message == message{
 			return nil
 		}else{
-			fmt.Printf("expected - %s - recieved - %s\n",topic ,recieved_topic)
-			fmt.Printf("expected - %s - recieved - %s\n",message,recieved_message)
-			return errors.New("Error occured recieved wrong ack")
+			return errors.New(recieved_topic)
 		}
 	case <-time.After(3 * time.Second):
 		return errors.New("Did not recieve ack")

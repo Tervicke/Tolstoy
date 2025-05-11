@@ -18,6 +18,10 @@ func NewAgent(addr string) (*agent,  error) {
 	if err != nil{
 		return nil,err
 	}
+	//write the verification packet
+	verifypacket := makepacket(7,"verifying","verifying")
+	conn.Write(verifypacket.tobytes())
+
 	a := &agent{
 		conn:   conn,
 		stop : make(chan struct{}), // Create the stop channel
@@ -42,7 +46,6 @@ func (a* agent) listen(){
 			case <- a.stop:
 				return
 			default:
-
 			buf := make([]byte,2049)
 			totalread := 0;
 			for totalread < 2049 {
@@ -51,7 +54,7 @@ func (a* agent) listen(){
 			}
 			packet := newpacket([2049]byte(buf))
 			switch packet.Type{
-				case -1:
+				case 8:
 					panic("Broker sent suddent disconnection request")
 				case 10,11,2:
 					a.ackchan <- packet

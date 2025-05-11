@@ -1,7 +1,6 @@
 package broker
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -38,8 +37,6 @@ var brokerSettings = configdata{
 
 func handleConnection(curCon net.Conn){
 	defer curCon.Close()
-	ActiveConnections[curCon] = struct{}{}
-	log.Printf("New Agent joined , count - %d\n", len(ActiveConnections))
 	for {
 		buf := make([]byte,2049)
 		totalread := 0;
@@ -52,24 +49,47 @@ func handleConnection(curCon net.Conn){
 			}
 			totalread += n
 		}
+		
 		newpacket := newPacket([2049]byte(buf),curCon);
-		if handlepacket, ok := handlers[newpacket.Type]; ok {
-			log.Println("packet recieved....acknowledging and handling")
-			if handlepacket(newpacket) {
-				log.Println("handled")
-				//newpacket.acknowledge()
-				//fmt.Println("acknowledged")
-			}else{
-				log.Println("Could not acknowledge , error")
+		handlepacket , ok := handlers[newpacket.Type]
+		_,valid_connection := ActiveConnections[curCon] 
+
+		//either its a valid connection or its trying to make it to a connection if not log and return
+
+		if !valid_connection{
+			if newpacket.Type != 7{
+				log.Println("Packet recieved by unverified connection")
+				errorpacket := newErrPacket("Please verify yourself");
+				log.Println(newpacket.Type , newpacket.Topic, newpacket.Payload)
+				curCon.Write(errorpacket[:])
+				return
 			}
+		}
+
+		if ok {
+
+			log.Println("packet recieved....trying to acknowledge and handle")
+
+			//handle the packet 
+			handled := handlepacket(newpacket)
+
+			if handled {
+				log.Println("handled the package")
+			}else{
+				log.Println("Could not handle the package")
+			}
+
 		}else{
+
 			//specify error code and and send it accordingly 
 			log.Println("Recieved Invalid packet type")
+
 		}
+
 	}
 }
 
-func StartServer(){
+func StartServer(configpath string){
 	go func(){
 		log.Println("Pprof listening at http://localhost:6060/debug/pprof/")
 		log.Println(http.ListenAndServe("localhost:6060",nil))
@@ -77,12 +97,7 @@ func StartServer(){
 
 	handleCrash()
 
-	config_path := flag.String("config" , "config.yaml" ,"The path to the config.yaml file \n by default it searches the current directory")                              
-	flag.Parse()
-	
-	//check if the config_path exists
-
-	err := loadConfig(*config_path)
+	err := loadConfig(configpath)
 
 	if err != nil{
 		log.Panicf("Error occured %v",err)
@@ -97,10 +112,6 @@ func StartServer(){
 	}
 
 	log.Printf("Server started on %s \n",addr)
-	//start profiling 
-
-
-	//server starts and then the config is loaded 
 
 	for true {
 		conn , err := broker.Accept();

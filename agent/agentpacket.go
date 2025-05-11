@@ -5,7 +5,7 @@ import (
 )
 
 type Packet struct{
-	Type int8
+	Type uint8
 	Topic string
 	Payload string
 }
@@ -19,7 +19,7 @@ func newpacket(packetbuffer [2049]byte ) Packet{
 	strings.Trim(payloadStr,"\x00") //trim the null bytes
 
 	newpacket := Packet{
-		Type: int8(packetbuffer[0]),
+		Type: uint8(packetbuffer[0]),
 		Topic : topicStr,
 		Payload :payloadStr,
 	}
@@ -37,7 +37,7 @@ func (p* Packet) tobytes() []byte{
 
 func makepacket(Type int , Topic string , Payload string) Packet{
 	newpacket := Packet{
-		Type: int8(Type),
+		Type: uint8(Type),
 		Topic:(Topic),
 		Payload:(Payload),
 	}

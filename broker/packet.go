@@ -74,7 +74,7 @@ func (p *Packet ) acknowledge(){
 
 func newDisconnectionPacket() (DPacket){
 	dpacket := DPacket{
-		Type:-1,
+		Type:8,
 	}
 	return dpacket;
 }

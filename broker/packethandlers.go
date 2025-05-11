@@ -11,11 +11,12 @@ import (
 type packetHandler func(packet Packet) bool
 
 var handlers = map[uint8]packetHandler{
-	4:handlePublishPacket, //handles the publish packet
-	5:handleSubscribePacket, //handles the subscribe packet
-	6:handleUnsubscribePacket,
+	4:HandlePublishPacket, //handles the publish packet
+	5:HandleSubscribePacket, //handles the subscribe packet
+	6:HandleUnsubscribePacket,
+	7:HandleConnectionRequestPacket,
 }
-func handleUnsubscribePacket(packet Packet) bool{
+func HandleUnsubscribePacket(packet Packet) bool{
 	topicConnections , exists := Topics[packet.Topic]
 	if !exists{
 		return true
@@ -25,7 +26,7 @@ func handleUnsubscribePacket(packet Packet) bool{
 	return true;//since no error
 }
 
-func handlePublishPacket(packet Packet) bool{
+func HandlePublishPacket(packet Packet) bool{
 	clients , exists := Topics[packet.Topic]
 	//if the topic doesnt exist create it 
 	if !exists{
@@ -45,12 +46,11 @@ func handlePublishPacket(packet Packet) bool{
 		client.Write( packetbytes[:] )
 	}
 
-	//publish ack_code = 10
 	packet.acknowledge()
 	return true
 }
 
-func handleSubscribePacket(packet Packet) bool {
+func HandleSubscribePacket(packet Packet) bool {
 	_ , exists := Topics[packet.Topic]
 
 	if !exists{
@@ -91,3 +91,16 @@ func GetFilePath(t time.Time , topic_name, persistance_directory string) string 
 	date := strconv.Itoa(year) + "-" + month.String() + "-"  +  strconv.Itoa(day);
 	return (persistance_directory + date + "-" + topic_name + ".log")
 }
+func HandleConnectionRequestPacket(packet Packet) bool{
+	_,already_connected := ActiveConnections[packet.Conn]
+	if already_connected {
+		return false
+	}
+
+	//add it to the active connection
+	ActiveConnections[packet.Conn] = struct{}{}
+	log.Println("Verified agent")
+	return true
+}
+
+

@@ -39,10 +39,12 @@ func main() {
 			err := agent.Publish(*topic, message)
 			if err != nil {
 				fmt.Println("Error occurred:", err)
+				break
 			} 
 		} else {
 			if err := scanner.Err(); err != nil {
 				fmt.Println("Error reading input:", err)
+				break
 			}
 			break
 		}

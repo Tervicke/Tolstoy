@@ -15,14 +15,6 @@ Each packet in the system is structured as follows:
 
 ## **Examples**
 
-### -1. **Sudden Disconnection Packet**
-- **Description**: Sent by the broker in case there is a sudden Disconnection , tells the client to panic and exits.
-
-  **Fields**:
-  - **Type**: -1 
-  - **Topic**: Empty 
-  - **Payload**: Empty 
-
 ---
 ### 1. **Acknowledge Packet**
 - **Description**: Sent by the broker to indicate the acceptance of a previously received packet. The topic and payload remain unchanged.
@@ -87,3 +79,20 @@ Each packet in the system is structured as follows:
   - **Type**: 6
   - **Topic**: The topic to unsubscribe to
   - **Payload**: Ignored
+
+### 7. **Connection REquest Packet**
+- **Description**: Sent by the broker in case there is a sudden Disconnection , tells the client to panic and exits.
+
+  **Fields**:
+  - **Type**: -1 
+  - **Topic**: Empty 
+  - **Payload**: Empty 
+
+### 8. **Sudden Disconnection Packet**
+- **Description**: Sent by the broker in case there is a sudden Disconnection , tells the client to panic and exits.
+
+  **Fields**:
+  - **Type**: -1 
+  - **Topic**: Empty 
+  - **Payload**: Empty 
+
