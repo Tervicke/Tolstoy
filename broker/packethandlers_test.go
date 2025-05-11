@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestPacketHandlerWithInvalidPacket(t *testing.T){
@@ -280,4 +281,17 @@ func TestWriteToFile(t *testing.T){
 		t.Errorf("Expected content %q , but got %q",expected_content,actual_content)
 	}
 
+}
+
+func TestGetFilePath(t *testing.T){
+	const (
+		topic_name = "my_topic"
+		persistance_directory = "tmp/logs/" //placeholder
+	)
+	time := time.Date(2025 , time.May , 11 , 0,0,0,0,time.UTC) 
+	expectedfilepath := "tmp/logs/2025-May-11-my_topic.log"
+	actualfilepath := GetFilePath(time , topic_name , persistance_directory)
+	if expectedfilepath != actualfilepath {
+		t.Errorf("Expected file path not found , expected %q got %q",expectedfilepath , actualfilepath)
+	}
 }

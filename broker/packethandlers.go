@@ -70,7 +70,7 @@ func WriteMessage(payload string , topic_name string){
 	if !brokerSettings.Persistence.Enabled {
 		return
 	}
-	filepath := getFilePath(topic_name)
+	filepath := GetFilePath(time.Now() , topic_name , brokerSettings.Persistence.Directory)
 	Writetofile(payload , filepath)
 
 }
@@ -86,9 +86,8 @@ func Writetofile(payload , filename string ){
 		log.Println("Error writing to a file")
 	}
 }
-func getFilePath(topic_name string) string {
-
-	year , month , day := time.Now().Date()
+func GetFilePath(t time.Time , topic_name, persistance_directory string) string {
+	year , month , day := t.Date()
 	date := strconv.Itoa(year) + "-" + month.String() + "-"  +  strconv.Itoa(day);
-	return (brokerSettings.Persistence.Directory + date + "-" + topic_name + ".log")
+	return (persistance_directory + date + "-" + topic_name + ".log")
 }
