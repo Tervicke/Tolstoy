@@ -9,11 +9,17 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"sync"
 	"syscall"
 )
 
 //make a map of net Conn and struct (because 0 bytes) //simulate a set
-var ActiveConnections = make(map[net.Conn]struct{})
+
+var (
+	ActiveConnections = make(map[net.Conn]struct{})
+	activeconnmutex sync.Mutex
+)
+
 var Topics = make(map[string]map[net.Conn]struct{})
 
 //host and port 
@@ -44,7 +50,9 @@ func handleConnection(curCon net.Conn){
 			n , err := curCon.Read(buf[totalread:])
 			if err != nil{
 				fmt.Println("agent left")
+				activeconnmutex.Lock()
 				delete(ActiveConnections ,curCon)
+				activeconnmutex.Unlock()
 				return;
 			}
 			totalread += n
@@ -63,6 +71,8 @@ func handleConnection(curCon net.Conn){
 				log.Println(newpacket.Type , newpacket.Topic, newpacket.Payload)
 				curCon.Write(errorpacket[:])
 				return
+			}else{
+				log.Println("New verification packet recieved")
 			}
 		}
 
@@ -139,4 +149,3 @@ func handleCrash(){
 		os.Exit(0)
 	}()
 }
-

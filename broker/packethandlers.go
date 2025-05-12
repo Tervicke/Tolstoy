@@ -98,7 +98,10 @@ func HandleConnectionRequestPacket(packet Packet) bool{
 	}
 
 	//add it to the active connection
+	activeconnmutex.Lock()
 	ActiveConnections[packet.Conn] = struct{}{}
+	activeconnmutex.Unlock()
+
 	log.Println("Verified agent")
 	return true
 }
