@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package packet;
+
+option go_package = "./proto;packet";
+
+message Packet{
+	Type type = 1;
+	string topic = 2;
+	string payload = 3; 
+}
+
+enum Type {
+	UNKNOWN = 0;
+	CONN_REQUEST = 1;
+	DIS_CONN_REQUEST = 3;
+	PUBLISH = 4;
+	SUBSCRIBE = 5;
+	UNSUBSCRIBE = 6; 
+}
