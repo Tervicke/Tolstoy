@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 )
-func (a *agent) Subscribe(topic string , callback onMessage) (error){
+func (a *agent) Subscribe(topic string , callback OnMessage) (error){
 	subpacket := makepacket(5,topic,"")  
 	a.conn.Write(subpacket.tobytes())
 	select{
@@ -12,7 +12,7 @@ func (a *agent) Subscribe(topic string , callback onMessage) (error){
 		recieved_topic := strings.Trim(ack.Topic,"\x00")
 		if recieved_topic == topic{
 			if a.callbacks == nil{
-				a.callbacks = make(map[string]onMessage)
+				a.callbacks = make(map[string]OnMessage)
 			}
 			a.callbacks[topic] = callback
 			return nil

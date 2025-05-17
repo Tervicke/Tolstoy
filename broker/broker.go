@@ -1,16 +1,21 @@
 package broker
 
 import (
+	pb "Tolstoy/proto"
+	"encoding/binary"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
-	"os"
-	"os/signal"
+//	"os"
+//	"os/signal"
 	"strconv"
 	"sync"
-	"syscall"
+//	"syscall"
+
+	"google.golang.org/protobuf/proto"
 )
 
 //make a map of net Conn and struct (because 0 bytes) //simulate a set
@@ -41,12 +46,47 @@ var brokerSettings = configdata{
 	Host:"",
 };
 
-func handleConnection(curCon net.Conn){
-	defer curCon.Close()
+func handleConnection(curConn net.Conn){
+	defer curConn.Close()
+	//infinite loop to keep listening
+	fixedSize := 4;
+	bufSize := make([]byte , fixedSize)
 	for {
-		buf := make([]byte,2049)
+		_ , err := io.ReadFull(curConn , bufSize)
+		if err != nil {
+			log.Println("Connection lost")
+			return
+		}
+		msgLen := binary.BigEndian.Uint32(bufSize)
+
+		if msgLen > 10_000 {
+			log.Println("message len limit excedded closing connection")
+			return
+		}
+
+		msgBuf := make([]byte , msgLen)
+		_ , err = io.ReadFull(curConn, msgBuf)
+		if err != nil {
+			log.Println("Connection lost")
+			return
+		}
+		var recPacket =  &pb.Packet{}
+		err = proto.Unmarshal(msgBuf , recPacket)
+		if err != nil {
+			log.Println("Connection lost")
+			continue
+		}
+		handlePacket(curConn , recPacket)
+	}
+}
+/*
+func andleConnection(curCon net.Conn){
+	defer curCon.Close()
+	//read the size buf first 4 byte long
+	buf := make([]byte , 4)
+	for {
 		totalread := 0;
-		for totalread < 2049 {
+		for totalread < len(buf){
 			n , err := curCon.Read(buf[totalread:])
 			if err != nil{
 				fmt.Println("agent left")
@@ -57,7 +97,6 @@ func handleConnection(curCon net.Conn){
 			}
 			totalread += n
 		}
-		
 		newpacket := newPacket([2049]byte(buf),curCon);
 		handlepacket , ok := handlers[newpacket.Type]
 		_,valid_connection := ActiveConnections[curCon] 
@@ -98,14 +137,14 @@ func handleConnection(curCon net.Conn){
 
 	}
 }
-
+*/
 func StartServer(configpath string){
 	go func(){
 		log.Println("Pprof listening at http://localhost:6060/debug/pprof/")
 		log.Println(http.ListenAndServe("localhost:6060",nil))
 	}()
 
-	handleCrash()
+	//handleCrash()
 
 	err := loadConfig(configpath)
 
@@ -134,6 +173,7 @@ func StartServer(configpath string){
 	}
 }
 
+/*
 func handleCrash(){
 
 	c := make(chan os.Signal , 1)
@@ -149,3 +189,4 @@ func handleCrash(){
 		os.Exit(0)
 	}()
 }
+*/

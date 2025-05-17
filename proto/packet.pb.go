@@ -26,29 +26,51 @@ type Type int32
 const (
 	Type_UNKNOWN          Type = 0
 	Type_CONN_REQUEST     Type = 1
-	Type_DIS_CONN_REQUEST Type = 3
-	Type_PUBLISH          Type = 4
-	Type_SUBSCRIBE        Type = 5
-	Type_UNSUBSCRIBE      Type = 6
+	Type_DIS_CONN_REQUEST Type = 2
+	Type_PUBLISH          Type = 3
+	Type_SUBSCRIBE        Type = 4
+	Type_UNSUBSCRIBE      Type = 5
+	Type_DELIVER          Type = 6
+	// ACK Types
+	Type_ACK_CONN_REQUEST     Type = 10
+	Type_ACK_DIS_CONN_REQUEST Type = 11
+	Type_ACK_PUBLISH          Type = 12
+	Type_ACK_SUBSCRIBE        Type = 13
+	Type_ACK_UNSUBSCRIBE      Type = 14
+	Type_ERROR                Type = 99
 )
 
 // Enum value maps for Type.
 var (
 	Type_name = map[int32]string{
-		0: "UNKNOWN",
-		1: "CONN_REQUEST",
-		3: "DIS_CONN_REQUEST",
-		4: "PUBLISH",
-		5: "SUBSCRIBE",
-		6: "UNSUBSCRIBE",
+		0:  "UNKNOWN",
+		1:  "CONN_REQUEST",
+		2:  "DIS_CONN_REQUEST",
+		3:  "PUBLISH",
+		4:  "SUBSCRIBE",
+		5:  "UNSUBSCRIBE",
+		6:  "DELIVER",
+		10: "ACK_CONN_REQUEST",
+		11: "ACK_DIS_CONN_REQUEST",
+		12: "ACK_PUBLISH",
+		13: "ACK_SUBSCRIBE",
+		14: "ACK_UNSUBSCRIBE",
+		99: "ERROR",
 	}
 	Type_value = map[string]int32{
-		"UNKNOWN":          0,
-		"CONN_REQUEST":     1,
-		"DIS_CONN_REQUEST": 3,
-		"PUBLISH":          4,
-		"SUBSCRIBE":        5,
-		"UNSUBSCRIBE":      6,
+		"UNKNOWN":              0,
+		"CONN_REQUEST":         1,
+		"DIS_CONN_REQUEST":     2,
+		"PUBLISH":              3,
+		"SUBSCRIBE":            4,
+		"UNSUBSCRIBE":          5,
+		"DELIVER":              6,
+		"ACK_CONN_REQUEST":     10,
+		"ACK_DIS_CONN_REQUEST": 11,
+		"ACK_PUBLISH":          12,
+		"ACK_SUBSCRIBE":        13,
+		"ACK_UNSUBSCRIBE":      14,
+		"ERROR":                99,
 	}
 )
 
@@ -81,9 +103,10 @@ func (Type) EnumDescriptor() ([]byte, []int) {
 
 type Packet struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Type          Type                   `protobuf:"varint,1,opt,name=type,proto3,enum=packet.Type" json:"type,omitempty"`
-	Topic         string                 `protobuf:"bytes,2,opt,name=topic,proto3" json:"topic,omitempty"`
-	Payload       string                 `protobuf:"bytes,3,opt,name=payload,proto3" json:"payload,omitempty"`
+	Type          Type                   `protobuf:"varint,1,opt,name=Type,proto3,enum=packet.Type" json:"Type,omitempty"`
+	Topic         string                 `protobuf:"bytes,2,opt,name=Topic,proto3" json:"Topic,omitempty"`
+	Payload       string                 `protobuf:"bytes,3,opt,name=Payload,proto3" json:"Payload,omitempty"`
+	Error         *ErrorMsg              `protobuf:"bytes,4,opt,name=Error,proto3,oneof" json:"Error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -139,22 +162,94 @@ func (x *Packet) GetPayload() string {
 	return ""
 }
 
+func (x *Packet) GetError() *ErrorMsg {
+	if x != nil {
+		return x.Error
+	}
+	return nil
+}
+
+type ErrorMsg struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          int32                  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ErrorMsg) Reset() {
+	*x = ErrorMsg{}
+	mi := &file_proto_packet_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ErrorMsg) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ErrorMsg) ProtoMessage() {}
+
+func (x *ErrorMsg) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_packet_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ErrorMsg.ProtoReflect.Descriptor instead.
+func (*ErrorMsg) Descriptor() ([]byte, []int) {
+	return file_proto_packet_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ErrorMsg) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *ErrorMsg) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
 var File_proto_packet_proto protoreflect.FileDescriptor
 
 const file_proto_packet_proto_rawDesc = "" +
 	"\n" +
-	"\x12proto/packet.proto\x12\x06packet\"Z\n" +
+	"\x12proto/packet.proto\x12\x06packet\"\x91\x01\n" +
 	"\x06Packet\x12 \n" +
-	"\x04type\x18\x01 \x01(\x0e2\f.packet.TypeR\x04type\x12\x14\n" +
-	"\x05topic\x18\x02 \x01(\tR\x05topic\x12\x18\n" +
-	"\apayload\x18\x03 \x01(\tR\apayload*h\n" +
+	"\x04Type\x18\x01 \x01(\x0e2\f.packet.TypeR\x04Type\x12\x14\n" +
+	"\x05Topic\x18\x02 \x01(\tR\x05Topic\x12\x18\n" +
+	"\aPayload\x18\x03 \x01(\tR\aPayload\x12+\n" +
+	"\x05Error\x18\x04 \x01(\v2\x10.packet.ErrorMsgH\x00R\x05Error\x88\x01\x01B\b\n" +
+	"\x06_Error\"2\n" +
+	"\bErrorMsg\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\x05R\x04code\x12\x12\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text*\xe9\x01\n" +
 	"\x04Type\x12\v\n" +
 	"\aUNKNOWN\x10\x00\x12\x10\n" +
 	"\fCONN_REQUEST\x10\x01\x12\x14\n" +
-	"\x10DIS_CONN_REQUEST\x10\x03\x12\v\n" +
-	"\aPUBLISH\x10\x04\x12\r\n" +
-	"\tSUBSCRIBE\x10\x05\x12\x0f\n" +
-	"\vUNSUBSCRIBE\x10\x06B\x10Z\x0e./proto;packetb\x06proto3"
+	"\x10DIS_CONN_REQUEST\x10\x02\x12\v\n" +
+	"\aPUBLISH\x10\x03\x12\r\n" +
+	"\tSUBSCRIBE\x10\x04\x12\x0f\n" +
+	"\vUNSUBSCRIBE\x10\x05\x12\v\n" +
+	"\aDELIVER\x10\x06\x12\x14\n" +
+	"\x10ACK_CONN_REQUEST\x10\n" +
+	"\x12\x18\n" +
+	"\x14ACK_DIS_CONN_REQUEST\x10\v\x12\x0f\n" +
+	"\vACK_PUBLISH\x10\f\x12\x11\n" +
+	"\rACK_SUBSCRIBE\x10\r\x12\x13\n" +
+	"\x0fACK_UNSUBSCRIBE\x10\x0e\x12\t\n" +
+	"\x05ERROR\x10cB\x10Z\x0e./proto;packetb\x06proto3"
 
 var (
 	file_proto_packet_proto_rawDescOnce sync.Once
@@ -169,18 +264,20 @@ func file_proto_packet_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_packet_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_packet_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_proto_packet_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_proto_packet_proto_goTypes = []any{
-	(Type)(0),      // 0: packet.Type
-	(*Packet)(nil), // 1: packet.Packet
+	(Type)(0),        // 0: packet.Type
+	(*Packet)(nil),   // 1: packet.Packet
+	(*ErrorMsg)(nil), // 2: packet.ErrorMsg
 }
 var file_proto_packet_proto_depIdxs = []int32{
-	0, // 0: packet.Packet.type:type_name -> packet.Type
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	0, // 0: packet.Packet.Type:type_name -> packet.Type
+	2, // 1: packet.Packet.Error:type_name -> packet.ErrorMsg
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_proto_packet_proto_init() }
@@ -188,13 +285,14 @@ func file_proto_packet_proto_init() {
 	if File_proto_packet_proto != nil {
 		return
 	}
+	file_proto_packet_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_packet_proto_rawDesc), len(file_proto_packet_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

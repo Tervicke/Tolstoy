@@ -8,8 +8,8 @@ import (
 )
 func main(){
 
-	addr := flag.String("addr" ,"" , "The adress to where the Tolstoy server is running")
-	topic := flag.String("topic", "" , "The topic to subscribe to")
+	addr := flag.String("addr" ,"localhost:8080" , "The adress to where the Tolstoy server is running")
+	topic := flag.String("topic", "mytopic" , "The topic to subscribe to")
 
 	flag.Parse()
 	if *addr == "" || *topic == "" {
@@ -19,22 +19,27 @@ func main(){
 		os.Exit(1)
 	}
 
-	agent,err:= agent.NewAgent(*addr)
+	consumer,err:= agent.NewConsumer(*addr)
+
 	fmt.Println("Press Ctrc+C to stop....\nEnter unsubscribe to unsubscribe")
+
 	if err != nil{
 		panic(err)
 	}
-	defer agent.Terminate()
-	err = agent.Subscribe(*topic, func(topic , message string){
+	working := true
+	err = consumer.Subscribe(*topic, func(topic , message string){
 		fmt.Println("> ",message)
 		if message == "unsubscribe" {
-			agent.Unsubscribe(topic)
+			consumer.Unsubscribe(topic)
 		}
 	})
+
 	if err != nil{
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	for {
+	for working {
+
 	}
+
 }

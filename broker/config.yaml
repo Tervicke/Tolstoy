@@ -6,4 +6,3 @@ Topics:
 Persistence:
   Enabled: false 
   Directory: "broker/data/topics/"
-    

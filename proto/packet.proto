@@ -5,16 +5,32 @@ package packet;
 option go_package = "./proto;packet";
 
 message Packet{
-	Type type = 1;
-	string topic = 2;
-	string payload = 3; 
+	Type Type = 1;
+	string Topic = 2;
+	string Payload = 3; 
+	optional ErrorMsg Error = 4;
+}
+
+message ErrorMsg {
+	int32 code = 1;
+	string text = 2;
 }
 
 enum Type {
 	UNKNOWN = 0;
 	CONN_REQUEST = 1;
-	DIS_CONN_REQUEST = 3;
-	PUBLISH = 4;
-	SUBSCRIBE = 5;
-	UNSUBSCRIBE = 6; 
+	DIS_CONN_REQUEST = 2;
+	PUBLISH = 3;
+	SUBSCRIBE = 4;
+	UNSUBSCRIBE = 5; 
+	DELIVER = 6;
+
+	//ACK Types
+	ACK_CONN_REQUEST = 10;
+  ACK_DIS_CONN_REQUEST = 11;
+  ACK_PUBLISH = 12;
+  ACK_SUBSCRIBE = 13;
+  ACK_UNSUBSCRIBE = 14;
+
+	ERROR = 99;
 }

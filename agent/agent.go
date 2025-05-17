@@ -1,8 +1,12 @@
 package agent
 
 import (
+	pb "Tolstoy/proto"
+	"encoding/binary"
 	"net"
 	"strings"
+
+	"google.golang.org/protobuf/proto"
 )
 
 type agent struct{
@@ -10,17 +14,23 @@ type agent struct{
 	stop chan struct{}
 	listening bool //true - listening channel exists
 	ackchan chan Packet //publish ack channel
-	callbacks map[string]onMessage //map for the callbacks of various topics
+	callbacks map[string]OnMessage //map for the callbacks of various topics
 }
+
+type OnMessage func(topic  , message string)
 
 func NewAgent(addr string) (*agent,  error) {
 	conn , err := net.Dial("tcp",addr);
 	if err != nil{
 		return nil,err
 	}
-	//write the verification packet
-	verifypacket := makepacket(7,"verifying","verifying")
-	conn.Write(verifypacket.tobytes())
+	// write the verification packet
+	// verifypacket := makepacket(7,"verifying","verifying"
+	connPacket := &pb.Packet{
+		Type: pb.Type_CONN_REQUEST,
+	}
+	//read the ack packet
+	writePacket(conn , connPacket)
 
 	a := &agent{
 		conn:   conn,
@@ -31,14 +41,11 @@ func NewAgent(addr string) (*agent,  error) {
 	return a,nil
 }
 
-type onMessage func(topic string, message string)
-
 
 func (a *agent) Unsubscribe(topic string){
 	unsubpacket := makepacket(6,topic,"")
 	a.conn.Write(unsubpacket.tobytes())
 }
-
 
 func (a* agent) listen(){
 	for{
@@ -81,3 +88,25 @@ func (a* agent) StopListening(){
 	a.listening = false
 }
 
+
+func writePacket(packetConn net.Conn , packet *pb.Packet) (error) {
+	data , err := proto.Marshal(packet)
+	if err != nil {
+		return err 
+	}
+	size := make([]byte , 4)
+	binary.BigEndian.PutUint32(size , uint32(len(data)))
+	_,err = packetConn.Write(size)
+
+	if err != nil {
+		return err
+	}
+
+	_,err = packetConn.Write(data)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

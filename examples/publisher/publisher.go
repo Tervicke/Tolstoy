@@ -10,8 +10,8 @@ import (
 
 func main() {
 	// Initialize the agent
-	addr := flag.String("addr" ,"" , "The adress to where the Tolstoy server is running")
-	topic := flag.String("topic", "" , "The topic to send message to")
+	addr := flag.String("addr" ,"localhost:8080" , "The adress to where the Tolstoy server is running")
+	topic := flag.String("topic", "mytopic" , "The topic to send message to")
 	flag.Parse()
 	if *addr == "" || *topic == "" {
 		fmt.Println(*topic , *addr)
@@ -19,12 +19,12 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	agent, err := agent.NewAgent(*addr)
+	producer, err := agent.NewProducer(*addr)
 	fmt.Println("type exit to exit")
 	if err != nil {
 		panic(err)
 	}
-	defer agent.Terminate()
+	//defer agent.Terminate()
 	// Create a scanner for reading input
 	scanner := bufio.NewScanner(os.Stdin)
 
@@ -36,7 +36,7 @@ func main() {
 			if message == "exit" {
 				os.Exit(0)
 			}
-			err := agent.Publish(*topic, message)
+			err := producer.Publish(*topic, message)
 			if err != nil {
 				fmt.Println("Error occurred:", err)
 				break
@@ -50,3 +50,4 @@ func main() {
 		}
 	}
 }
+

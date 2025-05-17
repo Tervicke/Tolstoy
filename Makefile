@@ -1,4 +1,5 @@
 .PHONY : benchmark
+.PHONY : proto
 runbroker:
 	go run main.go -config broker/config.yaml 
 
@@ -20,3 +21,6 @@ inttest:
 testall:
 	go test -v -cover ./broker
 	go test -v -cover ./test
+
+proto:
+	protoc --go_out=. proto/packet.proto

@@ -1,32 +1,36 @@
 package broker
 
 import (
+	//	"log"
 	"log"
 	"net"
-	"os"
-	"strconv"
-	"time"
+
+		"os"
+		"strconv"
+		"time"
+	pb "Tolstoy/proto"
 )
 
-type packetHandler func(packet Packet) bool
+type packetHandler func(packetConn net.Conn , packet *pb.Packet) bool
 
-var handlers = map[uint8]packetHandler{
-	4:HandlePublishPacket, //handles the publish packet
-	5:HandleSubscribePacket, //handles the subscribe packet
-	6:HandleUnsubscribePacket,
-	7:HandleConnectionRequestPacket,
+var handlers = map[pb.Type]packetHandler{
+	pb.Type_CONN_REQUEST : handleConnectionRequestPacket,
+	pb.Type_SUBSCRIBE : handleSubscribePacket,
+	pb.Type_UNSUBSCRIBE : handleUnsubscribePacket,
+	pb.Type_PUBLISH : handlePublishPacket,
+	pb.Type_DIS_CONN_REQUEST:handleDisconnectionPacket,
 }
-func HandleUnsubscribePacket(packet Packet) bool{
+func handleUnsubscribePacket(packetConn net.Conn , packet *pb.Packet) bool{
 	topicConnections , exists := Topics[packet.Topic]
 	if !exists{
 		return true
 	}
-	delete(topicConnections , packet.Conn)
-	packet.acknowledge() //subscribe ack
+	delete(topicConnections , packetConn)
+	ackPacket(packetConn, packet)
 	return true;//since no error
 }
 
-func HandlePublishPacket(packet Packet) bool{
+func handlePublishPacket(packetConn net.Conn , packet *pb.Packet) bool{
 	clients , exists := Topics[packet.Topic]
 	//if the topic doesnt exist create it 
 	if !exists{
@@ -34,35 +38,40 @@ func HandlePublishPacket(packet Packet) bool{
 	}
 	//write it to the log file 
 	WriteMessage(packet.Payload, packet.Topic)
-	log.Println("Acknowledged")
-	packet.acknowledge()
+	ackPacket(packetConn , packet)
 	for client := range clients{
-		packet.Type = 3 // change the packet type to indicating its a server sent packet
-		var emptybytearray [2049]byte;
-		packetbytes := packet.toBytes()
-		if packetbytes == emptybytearray {
-			log.Println("Ignored a empty packet")
-			return false
+		deliverPacket := &pb.Packet{
+			Type : pb.Type_DELIVER,
+			Topic : packet.Topic,
+			Payload: packet.Payload,
 		}
-		client.Write( packetbytes[:] )
+		writePacket(client,deliverPacket)
 	}
 
 	return true
 }
 
-func HandleSubscribePacket(packet Packet) bool {
+func handleSubscribePacket(packetConn net.Conn , packet *pb.Packet) bool {
 	_ , exists := Topics[packet.Topic]
 
 	if !exists{
-		errorpacket := newErrPacket("Topic does not exist");
-		log.Printf("Sent Error packet for no topic %v\n",packet.Topic)
-		packet.Conn.Write(errorpacket[:]);
+		//make a new Error packet
+		errorPacket := packet	
+		errorPacket.Type = pb.Type_ERROR
+		errorPacket.Error = &pb.ErrorMsg{
+			Code:1, //default code for now
+			Text:"No such topic exists",
+		}
+		err := writePacket(packetConn , errorPacket)
+		if err != nil {
+			log.Println("Failed to send error packet")
+		}
 		return false;
 	}
 	//add subscriber
-	Topics[packet.Topic][packet.Conn] = struct{}{}
+	Topics[packet.Topic][packetConn] = struct{}{}
 	log.Printf("New subscriber added to %s | count = %d\n",packet.Topic,len(Topics[packet.Topic]))
-	packet.acknowledge() //ack code - 11 for successful subscribe
+	ackPacket(packetConn , packet)
 	return true
 }
 
@@ -91,19 +100,44 @@ func GetFilePath(t time.Time , topic_name, persistance_directory string) string 
 	date := strconv.Itoa(year) + "-" + month.String() + "-"  +  strconv.Itoa(day);
 	return (persistance_directory + date + "-" + topic_name + ".log")
 }
-func HandleConnectionRequestPacket(packet Packet) bool{
-	_,already_connected := ActiveConnections[packet.Conn]
-	if already_connected {
-		return false
+
+func handleConnectionRequestPacket(packetConn net.Conn , packet *pb.Packet) bool{
+	_,already_connected := ActiveConnections[packetConn]
+	if !already_connected {
+		activeconnmutex.Lock()
+		ActiveConnections[packetConn] = struct{}{}
+		activeconnmutex.Unlock()
 	}
-
-	//add it to the active connection
-	activeconnmutex.Lock()
-	ActiveConnections[packet.Conn] = struct{}{}
-	activeconnmutex.Unlock()
-
 	log.Println("Verified agent")
 	return true
 }
 
+func handlePacket(packetConn net.Conn , packet *pb.Packet){
+	_ , verified := ActiveConnections[packetConn] 
+	if !verified && packet.Type != pb.Type_CONN_REQUEST {
+		log.Println("Unverfied packet recieved ... ignored")
+		return
+	}
 
+	if function , exists := handlers[packet.Type] ; exists {
+		result := function(packetConn , packet)
+		if !result {
+			log.Println("Packet not cleared")
+		}else{
+			//write ack packet
+			log.Println("Packet cleared")
+			ackpacket := &pb.Packet{
+				Type: pb.Type_ACK_CONN_REQUEST,
+			}
+			writePacket(packetConn , ackpacket)
+		}
+	}else{
+		log.Println("Invalid packet type recieved")
+	}
+}
+func handleDisconnectionPacket(packetConn net.Conn , packet *pb.Packet) bool {
+	activeconnmutex.Lock()
+	delete(ActiveConnections , packetConn)
+	activeconnmutex.Unlock()
+	return true
+}

@@ -1,94 +1,58 @@
 package broker
 
 import (
-	"fmt"
+	pb "Tolstoy/proto"
+	"log"
 	"net"
-	"strings"
+	"encoding/binary"
+
+	"google.golang.org/protobuf/proto"
 )
-//This is the Err packet that is sent by the broker when the handler finds and error in the request / message 
-//Error will contain the error as string and Type will be a error type
-type ErrPacket struct{
-	Type int8
-	Error string	
-}
-type DPacket struct{
-	Type int8
-}
-type Packet struct{
-	Conn net.Conn
-	Type uint8
-	Topic string 
-	Payload string
-}
 
-func newPacket(packetbuffer [2049]byte , conn net.Conn) Packet{
-	topicStr := strings.Trim(string(packetbuffer[1:1025]),"\x00")
-	payloadStr := strings.Trim(string(packetbuffer[1025:2049]),"\x00") 
-
-
-	strings.Trim(topicStr,"\x00")
-	strings.Trim(payloadStr,"\x00") //trim the null bytes
-
-	newpacket := Packet{
-		Conn: conn,
-		Type: uint8(packetbuffer[0]),
-		Topic : topicStr,
-		Payload :payloadStr,
+//
+func AckTypeFor(t pb.Type) pb.Type {
+	switch t {
+	case pb.Type_CONN_REQUEST:
+		return pb.Type_ACK_CONN_REQUEST
+	case pb.Type_DIS_CONN_REQUEST:
+		return pb.Type_ACK_DIS_CONN_REQUEST
+	case pb.Type_PUBLISH:
+		return pb.Type_ACK_PUBLISH
+	case pb.Type_SUBSCRIBE:
+		return pb.Type_ACK_SUBSCRIBE
+	case pb.Type_UNSUBSCRIBE:
+		return pb.Type_ACK_UNSUBSCRIBE
+	default:
+		return pb.Type_UNKNOWN
 	}
-	return newpacket;
 }
 
-func (p *Packet) Print() {
-	fmt.Printf("Type: %d\n", p.Type)
-	fmt.Printf("Topic: %s\n", p.Topic)
-	fmt.Printf("Payload: %s\n", p.Payload)
+func ackPacket(packetConn net.Conn, packet *pb.Packet) {
+	ackType := AckTypeFor(packet.Type)
+	ackPacket := packet
+	ackPacket.Type = ackType
+	writePacket(packetConn , ackPacket)
+	log.Printf("Acknowledged a %s packet",packet.Type)
 }
 
-func (p *Packet) toBytes() [2049]byte {
-	//buf :=  make([]byte , 2049)
-	var buf [2049]byte
-	buf[0] = byte(p.Type)
-	copy(buf[1:2025] , []byte(p.Topic))
-	copy(buf[1025:2049] , []byte(p.Payload))
-	return buf
-}
-func newErrPacket(err string) [2049]byte{
-	var errpacket [2049]byte;
-	errpacket[0] = 2;
-	copy(errpacket[1:], []byte(err))
-	return errpacket
-}
-func (p *Packet ) acknowledge(){
-	var ackcodes = make(map[uint8]uint8)
-
-	ackcodes[4] = 10 //publish ack
-	ackcodes[5] = 11 //subscribe ack
-	ackcodes[6] = 12 //unsubscribe ack
-
-	var ackpacket [2049]byte;
-	ackpacket[0] = ackcodes[p.Type]; //get the ack code based on the packet type
-	copy(ackpacket[1:1025], []byte(p.Topic))
-	copy(ackpacket[1025:], []byte(p.Payload))
-	p.Conn.Write(ackpacket[:])
-}
-
-func newDisconnectionPacket() (DPacket){
-	dpacket := DPacket{
-		Type:8,
+func writePacket(packetConn net.Conn , packet *pb.Packet) (error) {
+	data , err := proto.Marshal(packet)
+	if err != nil {
+		return err 
 	}
-	return dpacket;
-}
-func (dp *DPacket) toBytes() []byte {
-	buf :=  make([]byte , 2049)
-	buf[0] = byte(dp.Type)
-	return buf
-}
+	size := make([]byte , 4)
+	binary.BigEndian.PutUint32(size , uint32(len(data)))
+	_,err = packetConn.Write(size)
 
-func makepacketbyte(Type uint8 , Topic , Payload string ) ( [2049]byte ) {
-	var packetbyte [2049]byte
-	packetbyte[0] = Type
-	copy(packetbyte[1:1025],Topic)
-	copy(packetbyte[1025:2049],Payload)
-	return packetbyte
-}
+	if err != nil {
+		return err
+	}
 
+	_,err = packetConn.Write(data)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

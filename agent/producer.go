@@ -1,0 +1,131 @@
+package agent
+
+import (
+	pb "Tolstoy/proto"
+	"encoding/binary"
+	"errors"
+	"fmt"
+	"io"
+	"net"
+	"time"
+
+	"google.golang.org/protobuf/proto"
+)
+
+type producer struct{
+	conn net.Conn
+	stop chan struct{}
+	listening bool //true - listening channel exists
+	ackchan chan *pb.Packet //publish ack channel
+	callbacks map[string]OnMessage //map for the callbacks of various topics
+}
+
+func NewProducer(addr string) (*producer , error) {
+	conn , err := net.Dial("tcp",addr);
+	if err != nil{
+		return nil,err
+	}
+	connPacket := &pb.Packet{
+		Type: pb.Type_CONN_REQUEST,
+	}
+	writePacket(conn , connPacket)
+
+	//read the conn request ack
+	sizeBuf := make([]byte,4)
+	_ , err = io.ReadFull(conn , sizeBuf)
+	if err != nil {
+		fmt.Println("packet size error")
+		return nil,errors.New("server did not send correct packet size response")
+	}
+	size := binary.BigEndian.Uint32(sizeBuf)
+	msgBuf := make([]byte,size)
+	_, err = io.ReadFull(conn , msgBuf)
+	if err != nil {
+		fmt.Println("packet error")
+		return nil,errors.New("server did not send correct response")
+	}
+	packet := &pb.Packet{}
+	err = proto.Unmarshal(msgBuf , packet)
+	if err != nil {
+		return nil,errors.New("Failed to make consumer")
+	}
+	if packet.Type != pb.Type_ACK_CONN_REQUEST {
+		return nil,errors.New("Failed to connect to server")
+	}
+	p := &producer{
+		conn : conn,
+		stop : make(chan struct{}), // Create the stop channel
+		ackchan:  make(chan *pb.Packet),
+	}
+	go p.listen()
+	return p,nil
+}
+
+func (p *producer) listen(){
+	for {
+		select {
+			case <- p.stop:
+				return
+			default:
+				//read the size first and then read the buf and deserialize it
+				sizeBuf := make([]byte,4)
+				io.ReadFull(p.conn , sizeBuf)
+				size := binary.BigEndian.Uint32(sizeBuf)
+				msgBuf := make([]byte,size)
+				io.ReadFull(p.conn , msgBuf)
+				//serialize
+				packet := &pb.Packet{}
+				proto.Unmarshal(msgBuf , packet)
+				switch packet.Type{
+					case pb.Type_ACK_PUBLISH:
+						p.ackchan <- packet
+				}
+		}
+	}
+}
+
+func (p *producer) Publish(topic , payload string) (error){
+	pubPacket := &pb.Packet{
+		Type:pb.Type_PUBLISH,
+		Topic : topic,
+		Payload: payload,
+	}
+	err := writePacket(p.conn , pubPacket)
+	if err != nil {
+		return err
+	}
+	//TODO accept ack ment
+	select {
+	case ack := <- p.ackchan:
+		if ack.Topic == topic && ack.Payload == payload {
+			return nil
+		}
+		return errors.New("Did not recieve the correct ack")
+	case <- time.After(3 * time.Second):
+		return errors.New("Did not recieve ack")
+	}
+}
+
+func (p *producer) Terminate() (error){
+	//send the Disconnection Packet
+	disConPacket := &pb.Packet{
+		Type : pb.Type_DIS_CONN_REQUEST,
+	}
+	err := writePacket(p.conn , disConPacket)
+
+	if err != nil {
+		return err
+	}
+
+	p.StopListening()
+	p.conn.Close()
+	return nil
+}
+
+func (p* producer) StopListening(){
+	if p.listening{
+		close(p.stop)
+	}
+	p.listening = false
+}
+
