@@ -2,6 +2,7 @@ package broker
 
 import (
 	pb "Tolstoy/proto"
+	"crypto/tls"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -41,6 +42,11 @@ type configdata struct{
 			Enabled bool `yaml:"Enabled"`
 			Directory string `yaml:"Directory"`
 		} `yaml:"Persistence"`
+		Tls struct{
+			Enabled bool `yaml:"Enabled"`
+			CertFile string `yaml:"CertFile"`
+			KeyFile string `yaml:"KeyFile"`
+		} `yaml:"Tls"`
 }
 //default data to be overwritten when loadconfig runs
 var brokerSettings = configdata{
@@ -100,11 +106,27 @@ func StartServer(configpath string){
 	}
 
 	addr := brokerSettings.Host + ":" + strconv.Itoa(brokerSettings.Port)
+	
+	var broker net.Listener
 
-	broker , err := net.Listen("tcp" , addr);
-
-	if err != nil{
-		log.Panicf("Failed to start the broker %v \n",err)
+	if brokerSettings.Tls.Enabled {
+		cert , err := tls.LoadX509KeyPair(brokerSettings.Tls.CertFile , brokerSettings.Tls.KeyFile)
+		if err != nil {
+			log.Fatal("Failed to read the certificate/key:",err)
+		}
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{cert},
+		}
+		listener , err := net.Listen("tcp",addr)
+		if err != nil {
+			log.Fatal("failed to start the server",err)
+		}
+		broker = tls.NewListener(listener , tlsConfig)
+	}else{
+		broker , err  = net.Listen("tcp",addr)
+		if err != nil {
+			log.Fatal("failed to start the server",err)
+		}
 	}
 
 	log.Printf("Server started on %s \n",addr)

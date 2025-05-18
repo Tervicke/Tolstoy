@@ -18,8 +18,14 @@ func main(){
 		flag.Usage()
 		os.Exit(1)
 	}
+	
+	tlsCfg , err := agent.LoadTLSConfig("broker/data/tls/server.crt")
 
-	consumer,err:= agent.NewConsumer(*addr)
+	if err != nil {
+		panic(err)
+	}
+
+	consumer,err:= agent.NewConsumer(*addr , tlsCfg)
 
 	fmt.Println("Press Ctrc+C to stop....\nEnter unsubscribe to unsubscribe")
 

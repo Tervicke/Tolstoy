@@ -2,8 +2,12 @@ package agent
 
 import (
 	pb "Tolstoy/proto"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/binary"
+	"fmt"
 	"net"
+	"os"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -38,4 +42,20 @@ func writePacket(packetConn net.Conn , packet *pb.Packet) (error) {
 	}
 
 	return nil
+}
+
+func LoadTLSConfig(certFile string) (*tls.Config , error) {
+	caCert , err := os.ReadFile(certFile)
+	if err != nil {
+		return nil,err
+	}
+	//create a CA certificate pool and add cert
+	caCertPool := x509.NewCertPool()
+	if !caCertPool.AppendCertsFromPEM(caCert){
+		return nil,fmt.Errorf("failed to open a CA cert")
+	}
+	return &tls.Config{
+		RootCAs: caCertPool,
+		InsecureSkipVerify: false,
+	},nil
 }

@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"time"
+	"crypto/tls"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -20,8 +21,15 @@ type producer struct{
 	callbacks map[string]OnMessage //map for the callbacks of various topics
 }
 
-func NewProducer(addr string) (*producer , error) {
-	conn , err := net.Dial("tcp",addr);
+func NewProducer(addr string , tlsCfg *tls.Config) (*producer , error) {
+	var conn net.Conn
+	var err error = nil
+	if tlsCfg != nil {
+		conn , err = tls.Dial("tcp",addr , tlsCfg);
+	}else{
+		//tls config
+		conn , err = net.Dial("tcp",addr);
+	}
 	if err != nil{
 		return nil,err
 	}

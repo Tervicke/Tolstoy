@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"time"
+	"crypto/tls"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -20,8 +21,15 @@ type consumer struct{
 }
 
 
-func NewConsumer(addr string) (*consumer , error) {
-	conn , err := net.Dial("tcp",addr);
+func NewConsumer(addr string , tlsCfg *tls.Config ) (*consumer , error) {
+	var conn net.Conn 
+	var err error
+	if tlsCfg != nil{
+		conn , err = tls.Dial("tcp",addr,tlsCfg);
+	}else{
+		conn , err = net.Dial("tcp",addr);
+	}
+
 	if err != nil{
 		return nil,err
 	}

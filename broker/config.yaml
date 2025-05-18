@@ -6,3 +6,8 @@ Topics:
 Persistence:
   Enabled: false 
   Directory: "broker/data/topics/"
+Tls:
+  Enabled: true 
+  CertFile: "broker/data/tls/server.crt"
+  KeyFile: "broker/data/tls/server.key"
+  

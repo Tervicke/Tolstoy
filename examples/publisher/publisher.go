@@ -19,7 +19,14 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	producer, err := agent.NewProducer(*addr)
+	//load cfg file
+	tlsCfg,err := agent.LoadTLSConfig("broker/data/tls/server.crt")
+
+	if err != nil {
+		panic(err)
+	}
+
+	producer, err := agent.NewProducer(*addr , tlsCfg)
 	fmt.Println("type exit to exit")
 	if err != nil {
 		panic(err)
