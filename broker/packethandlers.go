@@ -8,7 +8,8 @@ import (
 		"os"
 		"strconv"
 		"time"
-	pb "Tolstoy/internal/proto"
+	pb "github.com/Tervicke/Tolstoy/internal/proto"
+
 )
 
 type packetHandler func(packetConn net.Conn , packet *pb.Packet) bool

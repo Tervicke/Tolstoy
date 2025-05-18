@@ -1,7 +1,7 @@
 package agent
 
 import (
-	pb "Tolstoy/internal/proto"
+	pb "github.com/Tervicke/Tolstoy/internal/proto"
 	"encoding/binary"
 	"errors"
 	"fmt"

@@ -1,4 +1,4 @@
-module Tolstoy
+module github.com/Tervicke/Tolstoy
 
 go 1.22.2
 
