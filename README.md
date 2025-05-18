@@ -1,5 +1,6 @@
 # A lightweight pub sub system written in golang 
 ~~read the [specs](specs.md) to get a understanding of how the pub sub protocol.~~
+
 we are now using protocol buffers , see the [protofile](proto/packet.proto)
 
 ![Tests](https://github.com/tervicke/Tolstoy/actions/workflows/test.yml/badge.svg).
