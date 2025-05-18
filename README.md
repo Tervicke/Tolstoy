@@ -52,7 +52,7 @@ Persistence:
 ## ToDo
 - [x] Make a simple demo publisher in Go
 - [x] Make a simple demo subscriber in go
-- [ ] Add baisc authentication in the topic access
+- [x] Add baisc authentication in the topic access (TLS)
 - [x] Persistent storage of messages 
 - [x] Write a small benchmark tool
 - [x] Add logging
