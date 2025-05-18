@@ -1,7 +1,7 @@
 # A lightweight pub sub system written in golang 
 ~~read the [specs](specs.md) to get a understanding of how the pub sub protocol.~~
 
-we are now using protocol buffers , see the [protofile](proto/packet.proto)
+we are now using protocol buffers , see the [protofile](/internal/proto/packet.proto)
 
 ![Tests](https://github.com/tervicke/Tolstoy/actions/workflows/test.yml/badge.svg).
 ## [Quickstart guide](https://tervicke.netlify.app/post/tolstoy_a_lightweight_pubsub_messaging_system/)
