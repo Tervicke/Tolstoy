@@ -1,7 +1,7 @@
 package broker
 
 import (
-	pb "Tolstoy/proto"
+	pb "Tolstoy/internal/proto"
 	"log"
 	"net"
 	"encoding/binary"

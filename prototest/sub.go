@@ -1,7 +1,7 @@
 package main
 
 import (
-	pb "Tolstoy/proto"
+	pb "Tolstoy/internal/proto"
 	"encoding/binary"
 	"io"
 	"log"
