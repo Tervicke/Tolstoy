@@ -1,7 +1,7 @@
 package agent
 
 import (
-	pb "Tolstoy/proto"
+	pb "Tolstoy/internal/proto"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"

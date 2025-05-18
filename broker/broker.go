@@ -1,7 +1,7 @@
 package broker
 
 import (
-	pb "Tolstoy/proto"
+	pb "Tolstoy/internal/proto"
 	"crypto/tls"
 	"encoding/binary"
 	"fmt"
