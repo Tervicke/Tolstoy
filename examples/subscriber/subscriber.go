@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Tolstoy/agent"
+	"github.com/Tervicke/Tolstoy/agent"
 	"flag"
 	"fmt"
 	"os"
@@ -18,14 +18,16 @@ func main(){
 		flag.Usage()
 		os.Exit(1)
 	}
-	
+
+	/*	
 	tlsCfg , err := agent.LoadTLSConfig("broker/data/tls/server.crt")
 
 	if err != nil {
 		panic(err)
 	}
+	*/
 
-	consumer,err:= agent.NewConsumer(*addr , tlsCfg)
+	consumer,err:= agent.NewConsumer(*addr , nil)
 
 	fmt.Println("Press Ctrc+C to stop....\nEnter unsubscribe to unsubscribe")
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Tolstoy/agent"
+	"github.com/Tervicke/Tolstoy/agent"
 	"bufio"
 	"fmt"
 	"flag"
@@ -19,14 +19,15 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
+	/*
 	//load cfg file
 	tlsCfg,err := agent.LoadTLSConfig("broker/data/tls/server.crt")
-
 	if err != nil {
 		panic(err)
 	}
+	*/
 
-	producer, err := agent.NewProducer(*addr , tlsCfg)
+	producer, err := agent.NewProducer(*addr , nil)
 	fmt.Println("type exit to exit")
 	if err != nil {
 		panic(err)

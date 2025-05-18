@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Tolstoy/broker"
+	"github.com/Tervicke/Tolstoy/broker"
 	"flag"
 )
 func main(){
