@@ -6,5 +6,5 @@ import (
 
 func main(){
 	fmt.Println("welcome to benchmark tool")
-	TestLatency( 10000 )
+	TestLatency( 10_000 )
 }

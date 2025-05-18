@@ -4,7 +4,6 @@ import (
 	pb "Tolstoy/proto"
 	"encoding/binary"
 	"net"
-	"strings"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -18,76 +17,6 @@ type agent struct{
 }
 
 type OnMessage func(topic  , message string)
-
-func NewAgent(addr string) (*agent,  error) {
-	conn , err := net.Dial("tcp",addr);
-	if err != nil{
-		return nil,err
-	}
-	// write the verification packet
-	// verifypacket := makepacket(7,"verifying","verifying"
-	connPacket := &pb.Packet{
-		Type: pb.Type_CONN_REQUEST,
-	}
-	//read the ack packet
-	writePacket(conn , connPacket)
-
-	a := &agent{
-		conn:   conn,
-		stop : make(chan struct{}), // Create the stop channel
-		ackchan:  make(chan Packet),
-	}
-	go a.listen()
-	return a,nil
-}
-
-
-func (a *agent) Unsubscribe(topic string){
-	unsubpacket := makepacket(6,topic,"")
-	a.conn.Write(unsubpacket.tobytes())
-}
-
-func (a* agent) listen(){
-	for{
-		select {
-			case <- a.stop:
-				return
-			default:
-			buf := make([]byte,2049)
-			totalread := 0;
-			for totalread < 2049 {
-				n,_ := a.conn.Read(buf[totalread:])
-				totalread += n
-			}
-			packet := newpacket([2049]byte(buf))
-			switch packet.Type{
-				case 8:
-					panic("Broker sent suddent disconnection request")
-				case 10,11,2:
-					a.ackchan <- packet
-				case 12:
-					return
-				case 3:
-					recieved_topic := strings.Trim(packet.Topic,"\x00")
-					if callback , exists := a.callbacks[recieved_topic] ; exists{
-						callback(strings.Trim(packet.Topic,"\x00"),strings.Trim(packet.Payload,"\x00"))
-					}
-			}
-		} 
-	}
-}
-
-func (a* agent) Terminate() {
-	a.StopListening()
-	a.conn.Close()
-}
-func (a* agent) StopListening(){
-	if a.listening{
-		close(a.stop)
-	}
-	a.listening = false
-}
-
 
 func writePacket(packetConn net.Conn , packet *pb.Packet) (error) {
 	data , err := proto.Marshal(packet)

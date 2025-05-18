@@ -9,11 +9,13 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof"
-//	"os"
-//	"os/signal"
+
+	//	"os"
+	//	"os/signal"
 	"strconv"
 	"sync"
-//	"syscall"
+
+	//	"syscall"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -77,67 +79,12 @@ func handleConnection(curConn net.Conn){
 			continue
 		}
 		handlePacket(curConn , recPacket)
+		if recPacket.Type == pb.Type_ACK_DIS_CONN_REQUEST {
+			return
+		}
 	}
 }
-/*
-func andleConnection(curCon net.Conn){
-	defer curCon.Close()
-	//read the size buf first 4 byte long
-	buf := make([]byte , 4)
-	for {
-		totalread := 0;
-		for totalread < len(buf){
-			n , err := curCon.Read(buf[totalread:])
-			if err != nil{
-				fmt.Println("agent left")
-				activeconnmutex.Lock()
-				delete(ActiveConnections ,curCon)
-				activeconnmutex.Unlock()
-				return;
-			}
-			totalread += n
-		}
-		newpacket := newPacket([2049]byte(buf),curCon);
-		handlepacket , ok := handlers[newpacket.Type]
-		_,valid_connection := ActiveConnections[curCon] 
 
-		//either its a valid connection or its trying to make it to a connection if not log and return
-
-		if !valid_connection{
-			if newpacket.Type != 7{
-				log.Println("Packet recieved by unverified connection")
-				errorpacket := newErrPacket("Please verify yourself");
-				log.Println(newpacket.Type , newpacket.Topic, newpacket.Payload)
-				curCon.Write(errorpacket[:])
-				return
-			}else{
-				log.Println("New verification packet recieved")
-			}
-		}
-
-		if ok {
-
-			log.Println("packet recieved....trying to acknowledge and handle")
-
-			//handle the packet 
-			handled := handlepacket(newpacket)
-
-			if handled {
-				log.Println("handled the package")
-			}else{
-				log.Println("Could not handle the package")
-			}
-
-		}else{
-
-			//specify error code and and send it accordingly 
-			log.Println("Recieved Invalid packet type")
-
-		}
-
-	}
-}
-*/
 func StartServer(configpath string){
 	go func(){
 		log.Println("Pprof listening at http://localhost:6060/debug/pprof/")

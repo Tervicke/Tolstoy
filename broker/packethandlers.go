@@ -139,5 +139,6 @@ func handleDisconnectionPacket(packetConn net.Conn , packet *pb.Packet) bool {
 	activeconnmutex.Lock()
 	delete(ActiveConnections , packetConn)
 	activeconnmutex.Unlock()
+	ackPacket(packetConn , packet)
 	return true
 }

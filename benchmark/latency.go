@@ -12,7 +12,7 @@ import (
 )
 
 func addPublisher(total_messages int){
-	agent,err := agent.NewAgent("localhost:8080")
+	agent,err := agent.NewProducer("localhost:8080")
 	if err != nil {
 		panic(err)
 	}
@@ -32,11 +32,11 @@ func addPublisher(total_messages int){
 
 func addSubscriber(total_messages int , done chan struct{}){
 
-	sub, err := agent.NewAgent("localhost:8080")
+	sub, err := agent.NewConsumer("localhost:8080")
+	
 	if err != nil {
 		panic(err)
 	}
-
 
 	var sum float64
 	var latencies []float64;
