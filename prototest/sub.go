@@ -1,5 +1,5 @@
 package main
-
+/*
 import (
 	pb "Tolstoy/internal/proto"
 	"encoding/binary"
@@ -93,3 +93,4 @@ func writePacket(packetConn net.Conn , packet *pb.Packet) (error) {
 
 	return nil
 }
+*/

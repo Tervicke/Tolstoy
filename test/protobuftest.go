@@ -1,5 +1,5 @@
 package main
-
+/*
 import (
 	pb "Tolstoy/proto"
 	"encoding/binary"
@@ -30,3 +30,4 @@ func testproto() {
 	conn.Write(size)
 	conn.Write(data)
 }
+*/

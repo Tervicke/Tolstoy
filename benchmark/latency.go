@@ -1,5 +1,5 @@
 package main
-
+/*
 import (
 	"Tolstoy/agent"
 	"fmt"
@@ -110,3 +110,4 @@ func printStats(average_latency, variance, p95, p99 float64) {
     fmt.Fprintf(writer, "P99\t%.4f ms\n", p99)
     writer.Flush()  // Don't forget to flush to output the results!
 }
+*/

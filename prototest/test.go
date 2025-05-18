@@ -1,5 +1,5 @@
 package main
-
+/*
 import (
 	pb "Tolstoy/proto"
 	"encoding/binary"
@@ -87,7 +87,6 @@ func main() {
  	for {
 
 	}
-	*/
 	fmt.Println("send the packet successfully")
 }
-
+*/
