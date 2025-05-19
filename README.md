@@ -49,6 +49,10 @@ Persistence:
   
   # Directory path where topic data will be stored if persistence is enabled
   Directory: "broker/data/topics/"
+Tls: #tls settings
+  Enabled: false #enable or disable tls
+  CertFile: "broker/data/tls/server.crt"
+  KeyFile: "broker/data/tls/server.key"
 ```
 
 ## ToDo
