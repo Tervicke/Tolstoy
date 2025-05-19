@@ -3,7 +3,8 @@
 
 we are now using protocol buffers , see the [protofile](/internal/proto/packet.proto)
 
-![Tests](https://github.com/tervicke/Tolstoy/actions/workflows/test.yml/badge.svg).
+![Tests](https://github.com/tervicke/Tolstoy/actions/workflows/test.yml/badge.svg)  ![Version](https://img.shields.io/github/v/tag/tervicke/Tolstoy?label=Latest&color=brightgreen)
+
 ## [Quickstart guide](https://tervicke.netlify.app/post/tolstoy_a_lightweight_pubsub_messaging_system/)
 ##  Running the example
 TO run the example follow these steps 
