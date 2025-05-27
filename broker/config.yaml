@@ -1,13 +1,40 @@
-Port: 8080
-Host: "localhost"
+# ─────────────────────────────────────────────
+# General Server Configuration
+# ─────────────────────────────────────────────
+Host: "localhost"          # Host where the Pub/Sub broker runs
+Port: 8080                 # Port for the Pub/Sub broker
+
+# ─────────────────────────────────────────────
+# Raft Consensus Settings (Optional)
+# ─────────────────────────────────────────────
+Raft:
+  Enabled: true              # Enable Raft cluster mode
+  Bootstrap: true            # If true, this node will bootstrap the cluster
+  # Join: "appaddr:9000"     # Address of existing node to join the cluster
+  Id: "node1"                # Unique node ID for Raft
+  Host: "localhost"          # Host for the Raft protocol
+  Port: 9000                 # Port for Raft communication
+  SnapshotInterval: 5000     # Optional: how often to snapshot the state (in ms)
+  ElectionTimeout: 1000      # Optional: Raft election timeout (in ms)
+
+# ─────────────────────────────────────────────
+# Topic Preloading (Optional)
+# ─────────────────────────────────────────────
 Topics:
   - "mytopic"
   - "anothertopic"
+
+# ─────────────────────────────────────────────
+# Persistence Settings (Optional)
+# ─────────────────────────────────────────────
 Persistence:
-  Enabled: false 
+  Enabled: false
   Directory: "broker/data/topics/"
+
+# ─────────────────────────────────────────────
+# TLS/SSL Settings (Optional)
+# ─────────────────────────────────────────────
 Tls:
-  Enabled: false 
+  Enabled: false
   CertFile: "broker/data/tls/server.crt"
   KeyFile: "broker/data/tls/server.key"
-  
