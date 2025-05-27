@@ -1,3 +1,4 @@
+# Deprecated
 ## **Pub-Sub System Specifications**
 Each packet in the system is structured as follows:
 
