@@ -38,6 +38,14 @@ type configdata struct{
 		Port int  `yaml:"Port"`
 		Host string `yaml:"Host"`
 		Topics []string `yaml:"Topics"`
+		Raft struct{
+			Enabled bool `yaml:"Enabled"`
+			Bootstrap bool `yaml:"Bootstrap"`
+			Join string `yaml:"Join"` 
+			Id string `yaml:"Id"` 
+			Host string `yaml:"Host"` 
+			Port int `yaml:"Port"` 
+		}
 		Persistence struct{ 
 			Enabled bool `yaml:"Enabled"`
 			Directory string `yaml:"Directory"`

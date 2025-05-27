@@ -14,8 +14,6 @@ Raft:
   Id: "node1"                # Unique node ID for Raft
   Host: "localhost"          # Host for the Raft protocol
   Port: 9000                 # Port for Raft communication
-  SnapshotInterval: 5000     # Optional: how often to snapshot the state (in ms)
-  ElectionTimeout: 1000      # Optional: Raft election timeout (in ms)
 
 # ─────────────────────────────────────────────
 # Topic Preloading (Optional)
