@@ -106,8 +106,13 @@ func StartServer(configpath string){
 	}()
 
 	//handleCrash()
-
 	err := loadConfig(configpath)
+	
+
+	//#Enable raft Configuration 
+	if(brokerSettings.Raft.Enabled){
+		setupRaft();
+	}
 
 	if err != nil{
 		log.Panicf("Error occured %v",err)
@@ -150,20 +155,6 @@ func StartServer(configpath string){
 	}
 }
 
-/*
-func handleCrash(){
-
-	c := make(chan os.Signal , 1)
-	signal.Notify(c,os.Interrupt,syscall.SIGTERM)
-	go func(){
-		 <-c
-		log.Printf("Shutting Down..sending disconnection packets to all the %d agents",len(ActiveConnections))
-		dpacket := newDisconnectionPacket()
-		for conn := range ActiveConnections{
-			conn.Write(dpacket.toBytes())
-		}
-		log.Printf("Sent disconnection packets to all the %d agents",len(ActiveConnections))
-		os.Exit(0)
-	}()
+func setupRaft(){
+	//TODO
 }
-*/
