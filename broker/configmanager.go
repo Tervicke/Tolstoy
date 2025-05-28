@@ -32,7 +32,7 @@ func loadConfig(config_path string) (error) {
 	}
 	//add the predefine the topics
 	for _,topicname := range brokerSettings.Topics{
-		Topics[topicname] = make(map[net.Conn]struct{}) 
+		Topics[topicname] = make(map[net.Conn]bool) 
 	}
 
 	log.Println("Loaded config succesfully")

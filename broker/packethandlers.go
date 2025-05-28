@@ -35,7 +35,7 @@ func handlePublishPacket(packetConn net.Conn , packet *pb.Packet) bool{
 	clients , exists := Topics[packet.Topic]
 	//if the topic doesnt exist create it 
 	if !exists{
-		Topics[packet.Topic] = make(map[net.Conn]struct{})
+		Topics[packet.Topic] = make(map[net.Conn]bool)
 	}
 	//write it to the log file 
 	WriteMessage(packet.Payload, packet.Topic)
@@ -70,7 +70,7 @@ func handleSubscribePacket(packetConn net.Conn , packet *pb.Packet) bool {
 		return false;
 	}
 	//add subscriber
-	Topics[packet.Topic][packetConn] = struct{}{}
+	Topics[packet.Topic][packetConn] = true
 	log.Printf("New subscriber added to %s | count = %d\n",packet.Topic,len(Topics[packet.Topic]))
 	ackPacket(packetConn , packet)
 	return true

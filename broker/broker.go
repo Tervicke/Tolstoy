@@ -28,7 +28,7 @@ var (
 	activeconnmutex sync.Mutex
 )
 
-var Topics = make(map[string]map[net.Conn]struct{})
+var Topics = make(map[string]map[net.Conn]bool)
 
 //host and port 
 var Host = "localhost"
