@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package packet;
 
-option go_package = "./proto;packet";
+option go_package = "./internal/proto;packet";
 
 message Packet{
 	Type Type = 1;
@@ -24,6 +24,8 @@ enum Type {
 	SUBSCRIBE = 4;
 	UNSUBSCRIBE = 5; 
 	DELIVER = 6;
+	PAUSE = 7;
+	RESUME = 8;
 
 	//ACK Types
 	ACK_CONN_REQUEST = 10;
@@ -31,6 +33,8 @@ enum Type {
   ACK_PUBLISH = 12;
   ACK_SUBSCRIBE = 13;
   ACK_UNSUBSCRIBE = 14;
+	ACK_PAUSE = 15;
+	ACK_RESUME = 16;
 
 	ERROR = 99;
 }

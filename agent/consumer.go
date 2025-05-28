@@ -92,7 +92,7 @@ func (c *consumer) listen(){
 						//callback the function on recieved topic
 						callbackfunction := c.callbacks[packet.Topic]
 						//calling the function
-						callbackfunction(packet.Topic , packet.Payload)
+						go callbackfunction(packet.Topic , packet.Payload)
 				}
 		}
 	}
@@ -160,4 +160,28 @@ func (c *consumer) StopListening(){
 		close(c.stop)
 	}
 	c.listening = false
+}
+
+func (c *consumer) Pause(topic string) error{
+	pausePacket := &pb.Packet{
+		Type: pb.Type_PAUSE,
+		Topic: topic,
+	}
+	err := writePacket(c.conn , pausePacket)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *consumer) Resume(topic string) error{
+	resumePacket := &pb.Packet{
+		Type: pb.Type_RESUME,
+		Topic: topic,
+	}
+	err := writePacket(c.conn , resumePacket)
+	if err != nil {
+		return err
+	}
+	return nil
 }

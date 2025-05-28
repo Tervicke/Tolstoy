@@ -24,4 +24,4 @@ testall:
 	go test -v -cover ./broker
 
 proto:
-	protoc --go_out=. proto/packet.proto
+	protoc --go_out=. internal/proto/packet.proto

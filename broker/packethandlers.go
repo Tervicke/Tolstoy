@@ -20,6 +20,8 @@ var handlers = map[pb.Type]packetHandler{
 	pb.Type_UNSUBSCRIBE : handleUnsubscribePacket,
 	pb.Type_PUBLISH : handlePublishPacket,
 	pb.Type_DIS_CONN_REQUEST:handleDisconnectionPacket,
+	pb.Type_PAUSE:handlePausePacket,
+	pb.Type_RESUME:handleResumePacket,
 }
 func handleUnsubscribePacket(packetConn net.Conn , packet *pb.Packet) bool{
 	topicConnections , exists := Topics[packet.Topic]
@@ -40,13 +42,18 @@ func handlePublishPacket(packetConn net.Conn , packet *pb.Packet) bool{
 	//write it to the log file 
 	WriteMessage(packet.Payload, packet.Topic)
 	ackPacket(packetConn , packet)
-	for client := range clients{
-		deliverPacket := &pb.Packet{
-			Type : pb.Type_DELIVER,
-			Topic : packet.Topic,
-			Payload: packet.Payload,
+
+	//delivery packet
+	deliverPacket := &pb.Packet{
+		Type : pb.Type_DELIVER,
+		Topic : packet.Topic,
+		Payload: packet.Payload,
+	}
+	for client,resumed:= range clients{
+		//only send the packet if its not paused 
+		if resumed{
+			writePacket(client,deliverPacket)
 		}
-		writePacket(client,deliverPacket)
 	}
 
 	return true
@@ -141,5 +148,43 @@ func handleDisconnectionPacket(packetConn net.Conn , packet *pb.Packet) bool {
 	delete(ActiveConnections , packetConn)
 	activeconnmutex.Unlock()
 	ackPacket(packetConn , packet)
+	return true
+}
+func handlePausePacket(packetConn net.Conn , packet *pb.Packet) bool {
+	_ , exists := Topics[packet.Topic]
+	if !exists{
+		//make a new Error packet
+		errorPacket := packet	
+		errorPacket.Type = pb.Type_ERROR
+		errorPacket.Error = &pb.ErrorMsg{
+			Code:1, //default code for now
+			Text:"No such topic exists",
+		}
+		err := writePacket(packetConn , errorPacket)
+		if err != nil {
+			log.Println("Failed to send error packet")
+		}
+		return false;
+	}
+	Topics[packet.Topic][packetConn] = false; 
+	return true
+}
+func handleResumePacket(packetConn net.Conn , packet *pb.Packet) bool {
+	_ , exists := Topics[packet.Topic]
+	if !exists{
+		//make a new Error packet
+		errorPacket := packet	
+		errorPacket.Type = pb.Type_ERROR
+		errorPacket.Error = &pb.ErrorMsg{
+			Code:1, //default code for now
+			Text:"No such topic exists",
+		}
+		err := writePacket(packetConn , errorPacket)
+		if err != nil {
+			log.Println("Failed to send error packet")
+		}
+		return false;
+	}
+	Topics[packet.Topic][packetConn] = true; 
 	return true
 }

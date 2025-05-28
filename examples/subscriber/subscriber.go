@@ -1,10 +1,12 @@
 package main
 
 import (
-	"github.com/Tervicke/Tolstoy/agent"
 	"flag"
 	"fmt"
 	"os"
+	"time"
+
+	"github.com/Tervicke/Tolstoy/agent"
 )
 func main(){
 
@@ -39,6 +41,19 @@ func main(){
 		fmt.Println("> ",message)
 		if message == "unsubscribe" {
 			consumer.Unsubscribe(topic)
+		}
+		if message == "pause"{
+			err := consumer.Pause(topic)
+			if err != nil {
+				fmt.Println("failed to pause")
+			}
+			fmt.Println("pausing for 5 seconds.....")
+			time.Sleep(5 * time.Second)
+			err = consumer.Resume(topic) 
+			if err != nil {
+				fmt.Println("failed to resume")
+			}
+			fmt.Println("resuming.....")
 		}
 	})
 
