@@ -63,3 +63,6 @@ Tls: #tls settings
 - [x] Write a small benchmark tool
 - [x] Add logging
 - [x] better readme and build & run instructions
+- [ ] Add offsets and to persisteted message
+- [ ] Add feature to pause the upcoming messages
+- [ ] Add feature to resume from lateset/lastoffset messages 
