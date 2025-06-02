@@ -17,8 +17,8 @@ type consumer struct{
 	conn net.Conn
 	stop chan struct{}
 	listening bool //true - listening channel exists
-	ackchan chan *pb.Packet //publish ack channel
 	callbacks map[string]OnMessage //map for the callbacks of various topics
+	ackchannels map[string]chan *pb.Packet //keep a list of ack channels associated with their unique Id
 }
 
 
@@ -61,10 +61,12 @@ func NewConsumer(addr string , tlsCfg *tls.Config ) (*consumer , error) {
 	if packet.Type != pb.Type_ACK_CONN_REQUEST {
 		return nil,errors.New("Failed to connect to server")
 	}
+	fmt.Println("read the connection request succesfully")
+	fmt.Println(packet)
 	c := &consumer{
 		conn : conn,
 		stop : make(chan struct{}), // Create the stop channel
-		ackchan:  make(chan *pb.Packet),
+		ackchannels:  make(map[string]chan *pb.Packet),
 	}
 	go c.listen()
 	return c,nil
@@ -86,58 +88,76 @@ func (c *consumer) listen(){
 				packet := &pb.Packet{}
 				proto.Unmarshal(msgBuf , packet)
 				switch packet.Type{
-					case pb.Type_ACK_SUBSCRIBE:
-						c.ackchan <- packet
 					case pb.Type_DELIVER:
 						//callback the function on recieved topic
 						callbackfunction := c.callbacks[packet.Topic]
 						//calling the function
 						go callbackfunction(packet.Topic , packet.Payload)
+					default:
+						c.ackchannels[packet.RequestId]<-packet
 				}
 		}
 	}
 }
 
 func (c *consumer) Subscribe(topic string , callback OnMessage) (error){
+	Id := generateUniqueId(c.ackchannels)
+	c.ackchannels[Id] = make(chan *pb.Packet)
+	defer delete(c.ackchannels , Id)
+
 	subpacket := &pb.Packet{
 		Type: pb.Type_SUBSCRIBE,
 		Topic: topic,
+		RequestId: Id,
 	}
+
 	err := writePacket(c.conn , subpacket)
 	if err != nil {
 		return errors.New("Failed to send subscribe packet")
 	}
 	select{
+		case ack := <-c.ackchannels[Id]:
 
-		case ack := <-c.ackchan:
-			if ack.Type == pb.Type_ACK_SUBSCRIBE && ack.Topic == topic{
-
+			if ack.Type == pb.Type_ERROR {
+				return errors.New(pb.Type_ERROR.String())
+			}else{
 				//save the callback
 				if c.callbacks == nil{
 					c.callbacks = make(map[string]OnMessage)
 				}
 				c.callbacks[topic] = callback
-
 				return nil
 			}
-			return errors.New("Recieved wrong ack")
 
 		case <-time.After(3 * time.Second):
 			return errors.New("Did not recieve ack")
-
 	}
 }
 
 func (c *consumer) Unsubscribe(topic string) (error){
+	Id := generateUniqueId(c.ackchannels) 
+	c.ackchannels[Id] = make(chan *pb.Packet)
+	defer delete(c.ackchannels , Id)
+
 	unSubPacket :=&pb.Packet{
 		Type: pb.Type_UNSUBSCRIBE,
 		Topic: topic,
+		RequestId: Id,
 	} 
 	err := writePacket(c.conn , unSubPacket)
 	if err != nil {
 		return err
 	}
-	return nil
+	select {
+		case ack:=<-c.ackchannels[Id] : 
+		if ack.Type != pb.Type_ERROR {
+			return errors.New(ack.Error.String())
+		}else{
+			return nil
+		}
+	case <-time.After(3 * time.Second):
+		return errors.New("did not recieve ack")
+	}
 }
 func (c *consumer) Terminate() (error){
 	//send the Disconnection Packet
@@ -163,25 +183,53 @@ func (c *consumer) StopListening(){
 }
 
 func (c *consumer) Pause(topic string) error{
+	Id := generateUniqueId(c.ackchannels)
+	c.ackchannels[Id] = make(chan *pb.Packet)
+	defer delete(c.ackchannels , Id)
+
 	pausePacket := &pb.Packet{
 		Type: pb.Type_PAUSE,
 		Topic: topic,
+		RequestId: Id,
 	}
 	err := writePacket(c.conn , pausePacket)
 	if err != nil {
 		return err
 	}
-	return nil
+	select {
+	case ack := <-c.ackchannels[Id]:
+		if ack.Type == pb.Type_ERROR{
+			return errors.New(ack.GetError().Text)
+		}else{
+			return nil
+		}
+	case <-time.After(3 * time.Second):
+		return errors.New("Did not recieve ack")
+	}
 }
 
 func (c *consumer) Resume(topic string) error{
+	Id := generateUniqueId(c.ackchannels)
+	c.ackchannels[Id] = make(chan *pb.Packet)
+	defer delete(c.ackchannels , Id)
+
 	resumePacket := &pb.Packet{
 		Type: pb.Type_RESUME,
 		Topic: topic,
+		RequestId: Id,
 	}
 	err := writePacket(c.conn , resumePacket)
 	if err != nil {
 		return err
 	}
-	return nil
+	select {
+		case ack := <-c.ackchannels[Id]:
+			if ack.Type == pb.Type_ERROR{
+				return errors.New(ack.GetError().Text)
+			}else{
+				return nil
+			}
+		case <-time.After(3 * time.Second):
+			return errors.New("Did not recieve ack")
+	}
 }

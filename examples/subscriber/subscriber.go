@@ -45,7 +45,7 @@ func main(){
 		if message == "pause"{
 			err := consumer.Pause(topic)
 			if err != nil {
-				fmt.Println("failed to pause")
+				fmt.Println("failed to pause" , err)
 			}
 			fmt.Println("pausing for 5 seconds.....")
 			time.Sleep(5 * time.Second)

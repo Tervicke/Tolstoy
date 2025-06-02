@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"math/rand/v2"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -59,4 +60,23 @@ func LoadTLSConfig(certFile string) (*tls.Config , error) {
 		RootCAs: caCertPool,
 		InsecureSkipVerify: false,
 	},nil
+}
+//generates a unique Id
+func generateUniqueId(channels map[string]chan *pb.Packet) (string) {
+	for {
+		Id := generateId()
+		_ , exist := channels[Id] 
+		if !exist {
+			return Id;
+		}
+	}
+}
+
+func generateId() string{
+	const letters string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+	var Id string = "";
+	for  i := 0 ; i <= 8 ; i++ {
+		Id += string(letters[rand.IntN(len(letters))]) //generate a random character from the string
+	}
+	return Id;
 }

@@ -2,14 +2,15 @@ package broker
 
 import (
 	//	"log"
+	"fmt"
 	"log"
 	"net"
 
-		"os"
-		"strconv"
-		"time"
-	pb "github.com/Tervicke/Tolstoy/internal/proto"
+	"os"
+	"strconv"
+	"time"
 
+	pb "github.com/Tervicke/Tolstoy/internal/proto"
 )
 
 type packetHandler func(packetConn net.Conn , packet *pb.Packet) bool
@@ -116,6 +117,10 @@ func handleConnectionRequestPacket(packetConn net.Conn , packet *pb.Packet) bool
 		ActiveConnections[packetConn] = struct{}{}
 		activeconnmutex.Unlock()
 	}
+	ackpacket := &pb.Packet{
+		Type: pb.Type_ACK_CONN_REQUEST,
+	}
+	writePacket(packetConn , ackpacket)
 	log.Println("Verified agent")
 	return true
 }
@@ -126,7 +131,12 @@ func handlePacket(packetConn net.Conn , packet *pb.Packet){
 		log.Println("Unverfied packet recieved ... ignored")
 		return
 	}
-
+	if packet.Type == pb.Type_CONN_REQUEST{
+		handleConnectionfunction := handlers[pb.Type_CONN_REQUEST]
+		handleConnectionfunction(packetConn , packet)
+		log.Println("verified user")
+		return
+	}
 	if function , exists := handlers[packet.Type] ; exists {
 		result := function(packetConn , packet)
 		if !result {
@@ -134,10 +144,6 @@ func handlePacket(packetConn net.Conn , packet *pb.Packet){
 		}else{
 			//write ack packet
 			log.Println("Packet cleared")
-			ackpacket := &pb.Packet{
-				Type: pb.Type_ACK_CONN_REQUEST,
-			}
-			writePacket(packetConn , ackpacket)
 		}
 	}else{
 		log.Println("Invalid packet type recieved")
@@ -153,6 +159,7 @@ func handleDisconnectionPacket(packetConn net.Conn , packet *pb.Packet) bool {
 func handlePausePacket(packetConn net.Conn , packet *pb.Packet) bool {
 	_ , exists := Topics[packet.Topic]
 	if !exists{
+		fmt.Println(packet.Topic)
 		//make a new Error packet
 		errorPacket := packet	
 		errorPacket.Type = pb.Type_ERROR
@@ -167,6 +174,7 @@ func handlePausePacket(packetConn net.Conn , packet *pb.Packet) bool {
 		return false;
 	}
 	Topics[packet.Topic][packetConn] = false; 
+	ackPacket( packetConn , packet )
 	return true
 }
 func handleResumePacket(packetConn net.Conn , packet *pb.Packet) bool {
@@ -186,5 +194,6 @@ func handleResumePacket(packetConn net.Conn , packet *pb.Packet) bool {
 		return false;
 	}
 	Topics[packet.Topic][packetConn] = true; 
+	ackPacket( packetConn , packet )
 	return true
 }

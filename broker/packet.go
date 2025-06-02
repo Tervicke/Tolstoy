@@ -22,6 +22,10 @@ func AckTypeFor(t pb.Type) pb.Type {
 		return pb.Type_ACK_SUBSCRIBE
 	case pb.Type_UNSUBSCRIBE:
 		return pb.Type_ACK_UNSUBSCRIBE
+	case pb.Type_PAUSE:
+		return pb.Type_ACK_PAUSE
+	case pb.Type_RESUME:
+		return pb.Type_ACK_RESUME
 	default:
 		return pb.Type_UNKNOWN
 	}

@@ -17,8 +17,8 @@ type producer struct{
 	conn net.Conn
 	stop chan struct{}
 	listening bool //true - listening channel exists
-	ackchan chan *pb.Packet //publish ack channel
 	callbacks map[string]OnMessage //map for the callbacks of various topics
+	ackchannels map[string]chan *pb.Packet //channel for handling ack
 }
 
 func NewProducer(addr string , tlsCfg *tls.Config) (*producer , error) {
@@ -63,7 +63,7 @@ func NewProducer(addr string , tlsCfg *tls.Config) (*producer , error) {
 	p := &producer{
 		conn : conn,
 		stop : make(chan struct{}), // Create the stop channel
-		ackchan:  make(chan *pb.Packet),
+		ackchannels:  make(map[string]chan *pb.Packet),
 	}
 	go p.listen()
 	return p,nil
@@ -85,30 +85,36 @@ func (p *producer) listen(){
 				packet := &pb.Packet{}
 				proto.Unmarshal(msgBuf , packet)
 				switch packet.Type{
-					case pb.Type_ACK_PUBLISH:
-						p.ackchan <- packet
+						default :
+						p.ackchannels[packet.RequestId]<-packet
 				}
 		}
 	}
 }
 
 func (p *producer) Publish(topic , payload string) (error){
+
+	Id := generateUniqueId(p.ackchannels)
+	p.ackchannels[Id] = make(chan *pb.Packet)
+	defer delete(p.ackchannels , Id)
+
 	pubPacket := &pb.Packet{
 		Type:pb.Type_PUBLISH,
 		Topic : topic,
 		Payload: payload,
+		RequestId: Id,
 	}
 	err := writePacket(p.conn , pubPacket)
 	if err != nil {
 		return err
 	}
-	//TODO accept ack ment
 	select {
-	case ack := <- p.ackchan:
-		if ack.Topic == topic && ack.Payload == payload {
+	case ack := <-p.ackchannels[Id]:
+		if ack.Type == pb.Type_ERROR{
+			return errors.New(ack.Error.Text)
+		}else{
 			return nil
 		}
-		return errors.New("Did not recieve the correct ack")
 	case <- time.After(3 * time.Second):
 		return errors.New("Did not recieve ack")
 	}
