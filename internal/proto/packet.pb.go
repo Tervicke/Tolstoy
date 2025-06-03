@@ -4,7 +4,7 @@
 // 	protoc        v3.21.12
 // source: internal/proto/packet.proto
 
-package packet
+package proto
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -276,7 +276,7 @@ const file_internal_proto_packet_proto_rawDesc = "" +
 	"\tACK_PAUSE\x10\x0f\x12\x0e\n" +
 	"\n" +
 	"ACK_RESUME\x10\x10\x12\t\n" +
-	"\x05ERROR\x10cB\x19Z\x17./internal/proto;packetb\x06proto3"
+	"\x05ERROR\x10cB\x18Z\x16./internal/proto;protob\x06proto3"
 
 var (
 	file_internal_proto_packet_proto_rawDescOnce sync.Once

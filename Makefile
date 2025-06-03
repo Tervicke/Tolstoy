@@ -25,3 +25,4 @@ testall:
 
 proto:
 	protoc --go_out=. internal/proto/packet.proto
+	protoc --go_out=. internal/proto/record.proto

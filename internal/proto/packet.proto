@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package packet;
 
-option go_package = "./internal/proto;packet";
+option go_package = "./internal/proto;proto";
 
 message Packet{
 	Type Type = 1;
