@@ -4,6 +4,5 @@ Topics:
   - "mytopic"
   - "anothertopic"
 Persistence:
-  Enabled: false 
-  Directory: "broker/data/topics/"
+  Directory: "broker/data/"
     

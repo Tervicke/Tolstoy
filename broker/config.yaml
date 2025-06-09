@@ -26,7 +26,7 @@ Topics:
 # Persistence Settings (Optional)
 # ─────────────────────────────────────────────
 Persistence:
-  Directory: "broker/data/"
+  Directory: "broker/data/" #default
 
 # ─────────────────────────────────────────────
 # TLS/SSL Settings (Optional)

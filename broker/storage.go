@@ -80,7 +80,7 @@ func readFromRecord(filename string , pos int64 , ) ( *pb.Record , error){
 //get the last offset a particular file
 
 func getLastOffset(indexFileName string) (int64 , error) {
-	indexFile , err := os.OpenFile(indexFileName, os.O_CREATE | os.O_RDONLY , 0644 )
+	indexFile , err := os.OpenFile(indexFileName, os.O_CREATE | os.O_RDWR , 0644 )
 	if err != nil {
 		return -1 , err 
 	}

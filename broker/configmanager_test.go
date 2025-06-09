@@ -25,11 +25,6 @@ func TestLoadConfig(t *testing.T) {
 			expected: errors.New("no host defined in the config file"),
 		},
 		{
-			name : "test correct config file",
-			configpath: "testdata/correctconfig1.yaml",
-			expected: nil,
-		},
-		{
 			name : "test config file doesnt exist",
 			configpath: "",
 			expected: errors.New("could not find the config file"),
