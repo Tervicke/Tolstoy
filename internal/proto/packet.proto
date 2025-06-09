@@ -10,6 +10,7 @@ message Packet{
 	string Payload = 3; 
 	optional ErrorMsg Error = 4;
 	string RequestId = 5;
+	int64 Offset = 6;
 }
 
 message ErrorMsg {

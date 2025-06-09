@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"fmt"
 
 	"gopkg.in/yaml.v3"
 )
@@ -33,6 +34,12 @@ func loadConfig(config_path string) (error) {
 	//add the predefine the topics
 	for _,topicname := range brokerSettings.Topics{
 		Topics[topicname] = make(map[net.Conn]bool) 
+		indexFileName := brokerSettings.Persistence.Directory + topicname + ".index"
+		lastOffset , err := getLastOffset(indexFileName)
+		if err != nil {
+			return fmt.Errorf("failed to read last offset for the file %s",indexFileName)
+		}
+		TopicOffsets[topicname] = lastOffset 
 	}
 
 	log.Println("Loaded config succesfully")

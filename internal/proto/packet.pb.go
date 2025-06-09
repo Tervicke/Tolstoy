@@ -120,6 +120,7 @@ type Packet struct {
 	Payload       string                 `protobuf:"bytes,3,opt,name=Payload,proto3" json:"Payload,omitempty"`
 	Error         *ErrorMsg              `protobuf:"bytes,4,opt,name=Error,proto3,oneof" json:"Error,omitempty"`
 	RequestId     string                 `protobuf:"bytes,5,opt,name=RequestId,proto3" json:"RequestId,omitempty"`
+	Offset        int64                  `protobuf:"varint,6,opt,name=Offset,proto3" json:"Offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -189,6 +190,13 @@ func (x *Packet) GetRequestId() string {
 	return ""
 }
 
+func (x *Packet) GetOffset() int64 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
 type ErrorMsg struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Code          int32                  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
@@ -245,13 +253,14 @@ var File_internal_proto_packet_proto protoreflect.FileDescriptor
 
 const file_internal_proto_packet_proto_rawDesc = "" +
 	"\n" +
-	"\x1binternal/proto/packet.proto\x12\x06packet\"\xaf\x01\n" +
+	"\x1binternal/proto/packet.proto\x12\x06packet\"\xc7\x01\n" +
 	"\x06Packet\x12 \n" +
 	"\x04Type\x18\x01 \x01(\x0e2\f.packet.TypeR\x04Type\x12\x14\n" +
 	"\x05Topic\x18\x02 \x01(\tR\x05Topic\x12\x18\n" +
 	"\aPayload\x18\x03 \x01(\tR\aPayload\x12+\n" +
 	"\x05Error\x18\x04 \x01(\v2\x10.packet.ErrorMsgH\x00R\x05Error\x88\x01\x01\x12\x1c\n" +
-	"\tRequestId\x18\x05 \x01(\tR\tRequestIdB\b\n" +
+	"\tRequestId\x18\x05 \x01(\tR\tRequestId\x12\x16\n" +
+	"\x06Offset\x18\x06 \x01(\x03R\x06OffsetB\b\n" +
 	"\x06_Error\"2\n" +
 	"\bErrorMsg\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\x05R\x04code\x12\x12\n" +

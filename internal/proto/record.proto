@@ -1,0 +1,10 @@
+//proto file for storing messages used by storage.go
+syntax = "proto3";
+package record;
+option go_package = "./internal/proto;proto";
+
+message Record {
+	int64 timestamp = 1;
+	bytes payload = 2;
+}
+

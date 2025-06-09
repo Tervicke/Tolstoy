@@ -22,13 +22,15 @@ import (
 )
 
 //make a map of net Conn and struct (because 0 bytes) //simulate a set
-
+//struct topic
 var (
 	ActiveConnections = make(map[net.Conn]struct{})
 	activeconnmutex sync.Mutex
 )
 
 var Topics = make(map[string]map[net.Conn]bool)
+
+var TopicOffsets = make(map[string]int64) //will store the offsets for a topic
 
 //host and port 
 var Host = "localhost"
@@ -47,7 +49,6 @@ type configdata struct{
 			Port int `yaml:"Port"` 
 		}
 		Persistence struct{ 
-			Enabled bool `yaml:"Enabled"`
 			Directory string `yaml:"Directory"`
 		} `yaml:"Persistence"`
 		Tls struct{

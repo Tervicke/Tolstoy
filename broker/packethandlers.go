@@ -2,11 +2,9 @@ package broker
 
 import (
 	//	"log"
-	"fmt"
 	"log"
 	"net"
 
-	"os"
 	"strconv"
 	"time"
 
@@ -35,13 +33,57 @@ func handleUnsubscribePacket(packetConn net.Conn , packet *pb.Packet) bool{
 }
 
 func handlePublishPacket(packetConn net.Conn , packet *pb.Packet) bool{
+
 	clients , exists := Topics[packet.Topic]
+	topicname := packet.Topic
 	//if the topic doesnt exist create it 
 	if !exists{
 		Topics[packet.Topic] = make(map[net.Conn]bool)
+		Topics[topicname] = make(map[net.Conn]bool) 
+		indexFileName := brokerSettings.Persistence.Directory + topicname + ".index"
+		lastOffset , err := getLastOffset(indexFileName)
+		if err != nil { 
+			log.Println("failed to read last offset for the file ",indexFileName)
+			return false
+		}
+		TopicOffsets[topicname] = lastOffset 
 	}
+
+	//increase the offset to match the current one
+	TopicOffsets[topicname]++
 	//write it to the log file 
-	WriteMessage(packet.Payload, packet.Topic)
+
+
+	//WriteMessage(packet.Payload, topicname)
+	//create the record to append it
+	now := time.Now()
+	record := &pb.Record{
+		Timestamp: now.Unix(),
+		Payload: []byte(packet.Payload),
+	}
+
+	indexFileName := brokerSettings.Persistence.Directory + topicname + ".index"
+	logfileName := brokerSettings.Persistence.Directory  + topicname +".log"
+
+	//update the offset in the index file
+	err := updateOffset(indexFileName , TopicOffsets[topicname])
+	if err != nil {
+		log.Println("failed to update offset for ",topicname,err)
+	}
+	
+	//append the record 
+	pos , err := AppendRecord(  logfileName, record )
+
+	if err != nil {
+		log.Println("Failed to append record" , err)
+		return false;
+	}
+	//append the pos in the index file
+	err = appendIndex(indexFileName , pos)
+	if err != nil {
+		log.Println("failed to append index",err)
+	}
+
 	ackPacket(packetConn , packet)
 
 	//delivery packet
@@ -49,7 +91,9 @@ func handlePublishPacket(packetConn net.Conn , packet *pb.Packet) bool{
 		Type : pb.Type_DELIVER,
 		Topic : packet.Topic,
 		Payload: packet.Payload,
+		Offset:TopicOffsets[topicname],
 	}
+
 	for client,resumed:= range clients{
 		//only send the packet if its not paused 
 		if resumed{
@@ -84,27 +128,7 @@ func handleSubscribePacket(packetConn net.Conn , packet *pb.Packet) bool {
 	return true
 }
 
-func WriteMessage(payload string , topic_name string){
-	if !brokerSettings.Persistence.Enabled {
-		return
-	}
-	filepath := GetFilePath(time.Now() , topic_name , brokerSettings.Persistence.Directory)
-	Writetofile(payload , filepath)
-
-}
-func Writetofile(payload , filename string ){
-	file,err := os.OpenFile(filename , os.O_APPEND|os.O_CREATE|os.O_WRONLY , 0644)
-	if err != nil{
-		log.Printf("Error writing payload to log file %v",err)
-	}
-
-	_,err = file.Write([]byte(payload + "\n"))
-
-	if err != nil{
-		log.Println("Error writing to a file")
-	}
-}
-func GetFilePath(t time.Time , topic_name, persistance_directory string) string {
+func GetFilePposath(t time.Time , topic_name, persistance_directory string) string {
 	year , month , day := t.Date()
 	date := strconv.Itoa(year) + "-" + month.String() + "-"  +  strconv.Itoa(day);
 	return (persistance_directory + date + "-" + topic_name + ".log")
@@ -159,7 +183,6 @@ func handleDisconnectionPacket(packetConn net.Conn , packet *pb.Packet) bool {
 func handlePausePacket(packetConn net.Conn , packet *pb.Packet) bool {
 	_ , exists := Topics[packet.Topic]
 	if !exists{
-		fmt.Println(packet.Topic)
 		//make a new Error packet
 		errorPacket := packet	
 		errorPacket.Type = pb.Type_ERROR
@@ -193,7 +216,40 @@ func handleResumePacket(packetConn net.Conn , packet *pb.Packet) bool {
 		}
 		return false;
 	}
+	//make it to true to send latest messages
 	Topics[packet.Topic][packetConn] = true; 
 	ackPacket( packetConn , packet )
+
+	if packet.Offset == -1{ //latest
+		return true
+	}
+
+	offset := packet.Offset
+	indexFileName :=  brokerSettings.Persistence.Directory + packet.Topic + ".index"
+	logFileName := brokerSettings.Persistence.Directory + packet.Topic + ".log"
+	totalOffset := TopicOffsets[packet.Topic] 
+	for offset < totalOffset{
+		pos , err := getOffsetPos(indexFileName , offset)
+		if err != nil {
+			log.Println("Failed to read pos skipping" , err)
+			offset++
+			continue
+		}
+		record , err := readFromRecord(logFileName , pos)
+		if err != nil {
+			log.Println("Failed to read Record skipping ", err)
+			offset++
+			continue
+		}
+		deliverPacket := &pb.Packet{
+			Type : pb.Type_DELIVER,
+			Topic : packet.Topic,
+			Payload: string(record.Payload),
+			Offset:offset,
+		}
+		offset++
+		writePacket(packetConn , deliverPacket)
+	}
+
 	return true
 }
