@@ -3,6 +3,7 @@ package broker
 import (
 	//	"log"
 	"log"
+	"math/rand"
 	"net"
 
 	"strconv"
@@ -252,4 +253,9 @@ func handleResumePacket(packetConn net.Conn , packet *pb.Packet) bool {
 	}
 
 	return true
+}
+
+//use this to test out packet retry logic , by simulating the 1in 3 packet to be dropped 
+func shouldDropAck() bool {
+    return rand.Intn(2) == 0 // drop 1 in 3 packets randomly
 }

@@ -42,7 +42,6 @@ func writePacket(packetConn net.Conn , packet *pb.Packet) (error) {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
