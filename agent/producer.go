@@ -111,28 +111,9 @@ func (p *producer) Publish(topic, payload string) error {
 		Payload:   payload,
 		RequestId: Id,
 	}
-	sent := false;
-	for i := 1; i <= p.MaxAttempts; i++ {
-		err := writePacket(p.conn, pubPacket)
-	
-		if err != nil {
-			//reconnect and try to send the message then
-			if errors.Is(err, syscall.EPIPE) {
-				fixed := p.brokenPipe()
-				if !fixed {
-					return errors.New("could not fix the broken pipe")
-				}else{
-					continue
-				}
-			}
-			return err
-		}else{
-			sent = true
-			break
-		}
-	}
-	if !sent{
-		return fmt.Errorf("Failed to send the packet after %d",p.MaxAttempts)
+	err := p.safeWritePacket(pubPacket) 
+	if err != nil{
+		return err
 	}
 	for i := 1; i <= p.MaxAttempts; i++ {
 		select {
@@ -155,8 +136,7 @@ func (p *producer) Terminate() error {
 	disConPacket := &pb.Packet{
 		Type: pb.Type_DIS_CONN_REQUEST,
 	}
-	err := writePacket(p.conn, disConPacket)
-
+	err := p.safeWritePacket(disConPacket) 
 	if err != nil {
 		return err
 	}
@@ -226,4 +206,25 @@ func (p *producer) brokenPipe() bool {
 		return true
 	}
 	return false
+}
+func (p *producer)safeWritePacket(packet *pb.Packet) (error){
+	for i := 1; i <= p.MaxAttempts; i++ {
+		err := writePacket(p.conn, packet)
+	
+		if err != nil {
+			//reconnect and try to send the message then
+			if errors.Is(err, syscall.EPIPE) {
+				fixed := p.brokenPipe()
+				if !fixed {
+					return errors.New("failed to send the packet,broken pipe")
+				}else{
+					continue
+				}
+			}
+			return err
+		}else{
+			break
+		}
+	}
+	return nil
 }
