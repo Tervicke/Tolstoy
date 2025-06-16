@@ -7,7 +7,7 @@ option go_package = "./internal/proto;proto";
 message Packet{
 	Type Type = 1;
 	string Topic = 2;
-	string Payload = 3; 
+	bytes Payload = 3; 
 	optional ErrorMsg Error = 4;
 	string RequestId = 5;
 	int64 Offset = 6;
