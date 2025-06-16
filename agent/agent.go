@@ -22,7 +22,7 @@ type agent struct{
 	callbacks map[string]OnMessage //map for the callbacks of various topics
 }
 
-type OnMessage func(topic  , message string)
+type OnMessage func(topic string  , payload []byte)
 
 func writePacket(packetConn net.Conn , packet *pb.Packet) (error) {
 	data , err := proto.Marshal(packet)

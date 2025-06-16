@@ -100,7 +100,7 @@ func (p *producer) listen() {
 	}
 }
 
-func (p *producer) Publish(topic, payload string) error {
+func (p *producer) Publish(topic string, payload []byte) error {
 	Id := generateUniqueId(p.ackchannels)
 	p.ackchannels[Id] = make(chan *pb.Packet)
 	defer delete(p.ackchannels, Id)

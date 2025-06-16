@@ -245,7 +245,7 @@ func handleResumePacket(packetConn net.Conn , packet *pb.Packet) bool {
 		deliverPacket := &pb.Packet{
 			Type : pb.Type_DELIVER,
 			Topic : packet.Topic,
-			Payload: string(record.Payload),
+			Payload: record.Payload,
 			Offset:offset,
 		}
 		offset++
