@@ -1,7 +1,7 @@
 .PHONY : benchmark
 .PHONY : proto
 build:
-	go build -o TolstoyServer
+	go build -o tolstoy
 runbroker:
 	go run main.go -config broker/config.yaml 
 
