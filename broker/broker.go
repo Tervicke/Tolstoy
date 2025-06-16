@@ -110,10 +110,6 @@ func StartServer(configpath string){
 	//handleCrash()
 	err := loadConfig(configpath)
 
-	//#Enable raft Configuration 
-	if(brokerSettings.Raft.Enabled){
-		setupRaft();
-	}
 
 	if err != nil{
 		log.Panicf("Error occured %v",err)
@@ -154,8 +150,4 @@ func StartServer(configpath string){
 
 		go handleConnection(conn);
 	}
-}
-
-func setupRaft(){
-	//TODO
 }
