@@ -106,14 +106,9 @@ func handleConnection(curConn net.Conn){
 }
 
 func StartServer(configpath string){
-	go func(){
-		log.Println("Pprof listening at http://localhost:6060/debug/pprof/")
-		log.Println(http.ListenAndServe("localhost:6060",nil))
-	}()
 
 	//handleCrash()
 	err := loadConfig(configpath)
-	
 
 	//#Enable raft Configuration 
 	if(brokerSettings.Raft.Enabled){
