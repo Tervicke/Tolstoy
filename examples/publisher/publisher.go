@@ -44,7 +44,7 @@ func main() {
 			if message == "exit" {
 				os.Exit(0)
 			}
-			err := producer.Publish(*topic, message)
+			err := producer.Publish(*topic, []byte(message))
 			if err != nil {
 				fmt.Println("Error occurred:", err)
 				break

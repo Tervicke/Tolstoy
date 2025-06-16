@@ -38,7 +38,8 @@ func main() {
 		panic(err)
 	}
 	working := true
-	err = consumer.Subscribe(*topic, func(topic, message string) {
+	err = consumer.Subscribe(*topic, func(topic string, payload []byte) {
+		message := string(payload)
 		fmt.Println("> ", message)
 		if message == "unsubscribe" {
 			consumer.Unsubscribe(topic)
