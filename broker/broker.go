@@ -61,6 +61,11 @@ type configdata struct{
 var brokerSettings = configdata{
 	Port: -1,
 	Host:"",
+	Persistence: struct{
+		Directory string `yaml:"Directory"`
+	}{
+		Directory: "Tolstoy/Data",
+	},
 };
 
 func handleConnection(curConn net.Conn){

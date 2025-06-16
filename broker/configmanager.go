@@ -31,6 +31,10 @@ func loadConfig(config_path string) (error) {
 	if brokerSettings.Host == ""{
 		return errors.New("no host defined in the config file")
 	}
+
+	//ensure the directory exists
+	ensureDir(brokerSettings.Persistence.Directory)
+
 	//add the predefine the topics
 	for _,topicname := range brokerSettings.Topics{
 		Topics[topicname] = make(map[net.Conn]bool) 
@@ -44,4 +48,12 @@ func loadConfig(config_path string) (error) {
 
 	log.Println("Loaded config succesfully")
 	return nil
+}
+func ensureDir(directory string){
+	if _ ,err := os.Stat(directory); os.IsNotExist(err){
+		err := os.MkdirAll(directory,0755)
+		if err != nil {
+			log.Fatalf("Failed to create directory %s %v",directory , err)
+		}
+	}
 }

@@ -26,8 +26,7 @@ Topics:
 # Persistence Settings (Optional)
 # ─────────────────────────────────────────────
 Persistence:
-  Directory: "broker/data/" #default
-
+  Directory: "broker/data/" #default /Tolstoy/Data/
 # ─────────────────────────────────────────────
 # TLS/SSL Settings (Optional)
 # ─────────────────────────────────────────────
