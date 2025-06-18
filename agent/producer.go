@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"syscall"
+//	"syscall"
 	"time"
 
 	pb "github.com/Tervicke/Tolstoy/internal/proto"
@@ -16,15 +16,9 @@ import (
 )
 
 type producer struct {
-	conn        net.Conn
-	stop        chan struct{}
-	listening   bool                       //true - listening channel exists
-	callbacks   map[string]OnMessage       //map for the callbacks of various topics
-	ackchannels map[string]chan *pb.Packet //channel for handling ack
-	MaxAttempts int
-	serverAddr  string      //addr of the connected server
-	tlsCfg      *tls.Config //tls config if any nil if none
+	agent
 }
+
 //Returns a new producer used to send messages to a topic. 
 //tls config should be nil to not use tls settings 
 //MaxAttempts for retrying can be overwritten
@@ -67,41 +61,20 @@ func NewProducer(addr string, tlsCfg *tls.Config) (*producer, error) {
 	if packet.Type != pb.Type_ACK_CONN_REQUEST {
 		return nil, errors.New("Failed to connect to server")
 	}
-	p := &producer{
+	p := &producer{}
+	p.agent = agent{
 		conn:        conn,
 		stop:        make(chan struct{}), // Create the stop channel
 		ackchannels: make(map[string]chan *pb.Packet),
 		MaxAttempts: 3,
 		serverAddr:  addr,
 		tlsCfg:      tlsCfg,
+		listener: p,
 	}
 	go p.listen()
 	return p, nil
 }
 
-//The internal function listen that runs in a go routine and listens to the incoming packets also routes them 
-func (p *producer) listen() {
-	for {
-		select {
-		case <-p.stop:
-			return
-		default:
-			//read the size first and then read the buf and deserialize it
-			sizeBuf := make([]byte, 4)
-			io.ReadFull(p.conn, sizeBuf)
-			size := binary.BigEndian.Uint32(sizeBuf)
-			msgBuf := make([]byte, size)
-			io.ReadFull(p.conn, msgBuf)
-			//serialize
-			packet := &pb.Packet{}
-			proto.Unmarshal(msgBuf, packet)
-			switch packet.Type {
-			default:
-				p.ackchannels[packet.RequestId] <- packet
-			}
-		}
-	}
-}
 //Used to publish a message in a particular topic
 func (p *producer) Publish(topic string, payload []byte) error {
 	Id := generateUniqueId(p.ackchannels)
@@ -132,105 +105,4 @@ func (p *producer) Publish(topic string, payload []byte) error {
 		time.Sleep(time.Duration((i * 100)) * time.Millisecond) //linear backoff
 	}	
 	return fmt.Errorf("Error recieving packet ack tried %d times", p.MaxAttempts)
-}
-
-//Used to terminate the producer
-func (p *producer) Terminate() error {
-	//send the Disconnection Packet
-	disConPacket := &pb.Packet{
-		Type: pb.Type_DIS_CONN_REQUEST,
-	}
-	err := p.safeWritePacket(disConPacket) 
-	if err != nil {
-		return err
-	}
-
-	p.stoplistening()
-	p.conn.Close()
-	return nil
-}
-
-//Internal used to stop listening to the server and terminate the listen go routine
-func (p *producer) stoplistening() {
-	if p.listening {
-		close(p.stop)
-	}
-	p.listening = false
-}
-
-// refers to the broken pipe returns true if broken pipe fixed after certain attemps else returns false
-func (p *producer) brokenPipe() bool {
-	for i := 1; i <= p.MaxAttempts; i++ {
-		var err error = nil
-		var conn net.Conn
-		if p.tlsCfg != nil {
-			conn, err = tls.Dial("tcp", p.serverAddr, p.tlsCfg)
-		} else {
-			//tls config
-			conn, err = net.Dial("tcp", p.serverAddr)
-		}
-		if err != nil {
-			//linearly wait for the timeout
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		connPacket := &pb.Packet{
-			Type: pb.Type_CONN_REQUEST,
-		}
-		err = writePacket(conn, connPacket)
-		if err != nil {
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		//read the conn request ack
-		sizeBuf := make([]byte, 4)
-		_, err = io.ReadFull(conn, sizeBuf)
-		if err != nil {
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		size := binary.BigEndian.Uint32(sizeBuf)
-		msgBuf := make([]byte, size)
-		_, err = io.ReadFull(conn, msgBuf)
-		if err != nil {
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		packet := &pb.Packet{}
-		err = proto.Unmarshal(msgBuf, packet)
-		if err != nil {
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		if packet.Type != pb.Type_ACK_CONN_REQUEST {
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		p.conn = conn
-		go p.listen()
-		return true
-	}
-	return false
-}
-//Internal safe write packet used to check and fix error when writing packet
-func (p *producer) safeWritePacket(packet *pb.Packet) (error){
-	for i := 1; i <= p.MaxAttempts; i++ {
-		err := writePacket(p.conn, packet)
-	
-		if err != nil {
-			//reconnect and try to send the message then
-			if errors.Is(err, syscall.EPIPE) {
-				fixed := p.brokenPipe()
-				if !fixed {
-					return errors.New("failed to send the packet,broken pipe")
-				}else{
-					continue
-				}
-			}
-			return err
-		}else{
-			break
-		}
-	}
-	return nil
 }
