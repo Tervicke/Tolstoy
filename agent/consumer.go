@@ -12,6 +12,7 @@ import (
 	"io"
 	"net"
 	"time"
+	"syscall"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -19,6 +20,7 @@ import (
 // consumer manages the client-side message consumption lifecycle in the pub/sub system.
 // It maintains network connection state, topic subscriptions, message acknowledgment,
 // and ordered processing through per-topic work queues.
+//MaxAttempts for retrying can be overwritten
 type consumer struct {
 	conn        net.Conn
 	stop        chan struct{}
@@ -28,6 +30,9 @@ type consumer struct {
 	offsets     map[string]int64             //map to store string and offsets
 	workqueue   map[string](chan *pb.Packet) //used to store the last recieved packets and run them concurrently and orderly
 	mu sync.Mutex
+	MaxAttempts int
+	serverAddr  string      //addr of the connected server
+	tlsCfg      *tls.Config //tls config if any nil if none
 }
 
 //returns a instance of agent.consumer based on the addr and the tls config if provided
@@ -76,6 +81,9 @@ func NewConsumer(addr string, tlsCfg *tls.Config) (*consumer, error) {
 		ackchannels: make(map[string]chan *pb.Packet),
 		offsets:     make(map[string]int64),
 		workqueue:   make(map[string](chan *pb.Packet)),
+		MaxAttempts: 3,
+		serverAddr:  addr,
+		tlsCfg:      tlsCfg,
 	}
 	go c.listen()
 	return c, nil
@@ -137,9 +145,9 @@ func (c *consumer) Subscribe(topic string, callback OnMessage) error {
 		RequestId: Id,
 	}
 
-	err := writePacket(c.conn, subpacket)
+	err := c.safeWritePacket(subpacket)
 	if err != nil {
-		return errors.New("Failed to send subscribe packet")
+		return err
 	}
 	select {
 	case ack := <-c.ackchannels[Id]:
@@ -174,7 +182,7 @@ func (c *consumer) Unsubscribe(topic string) error {
 		Topic:     topic,
 		RequestId: Id,
 	}
-	err := writePacket(c.conn, unSubPacket)
+	err := c.safeWritePacket(unSubPacket)
 	if err != nil {
 		return err
 	}
@@ -196,7 +204,7 @@ func (c *consumer) Terminate() error {
 	disConPacket := &pb.Packet{
 		Type: pb.Type_DIS_CONN_REQUEST,
 	}
-	err := writePacket(c.conn, disConPacket)
+	err := c.safeWritePacket(disConPacket)
 
 	if err != nil {
 		return err
@@ -227,7 +235,7 @@ func (c *consumer) Pause(topic string) error {
 		Topic:     topic,
 		RequestId: Id,
 	}
-	err := writePacket(c.conn, pausePacket)
+	err := c.safeWritePacket(pausePacket)
 	if err != nil {
 		return err
 	}
@@ -270,9 +278,8 @@ func (c *consumer) Resume(topic string, mode ResumeMode) error {
 		RequestId: Id,
 		Offset:    offset,
 	}
-	fmt.Println("resuming from ", offset)
 
-	err := writePacket(c.conn, resumePacket)
+	err := c.safeWritePacket(resumePacket)
 
 	if err != nil {
 		return err
@@ -287,4 +294,81 @@ func (c *consumer) Resume(topic string, mode ResumeMode) error {
 	case <-time.After(3 * time.Second):
 		return errors.New("Did not recieve ack")
 	}
+}
+
+//Internal safe write packet used to check and fix error when writing packet
+func (c *consumer)safeWritePacket(packet *pb.Packet) (error){
+	for i := 1; i <= c.MaxAttempts; i++ {
+		err := writePacket(c.conn, packet)
+	
+		if err != nil {
+			//reconnect and try to send the message then
+			if errors.Is(err, syscall.EPIPE) {
+				fixed := c.brokenPipe()
+				if !fixed {
+					return errors.New("failed to send the packet,broken pipe")
+				}else{
+					continue
+				}
+			}
+			return err
+		}else{
+			break
+		}
+	}
+	return nil
+}
+
+func (c *consumer) brokenPipe() bool {
+	for i := 1; i <= c.MaxAttempts; i++ {
+		var err error = nil
+		var conn net.Conn
+		if c.tlsCfg != nil {
+			conn, err = tls.Dial("tcp", c.serverAddr, c.tlsCfg)
+		} else {
+			//tls config
+			conn, err = net.Dial("tcp", c.serverAddr)
+		}
+		if err != nil {
+			//linearly wait for the timeout
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		connPacket := &pb.Packet{
+			Type: pb.Type_CONN_REQUEST,
+		}
+		err = writePacket(conn, connPacket)
+		if err != nil {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		//read the conn request ack
+		sizeBuf := make([]byte, 4)
+		_, err = io.ReadFull(conn, sizeBuf)
+		if err != nil {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		size := binary.BigEndian.Uint32(sizeBuf)
+		msgBuf := make([]byte, size)
+		_, err = io.ReadFull(conn, msgBuf)
+		if err != nil {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		packet := &pb.Packet{}
+		err = proto.Unmarshal(msgBuf, packet)
+		if err != nil {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		if packet.Type != pb.Type_ACK_CONN_REQUEST {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		c.conn = conn
+		go c.listen()
+		return true
+	}
+	return false
 }

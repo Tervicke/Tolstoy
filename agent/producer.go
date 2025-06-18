@@ -27,6 +27,7 @@ type producer struct {
 }
 //Returns a new producer used to send messages to a topic. 
 //tls config should be nil to not use tls settings 
+//MaxAttempts for retrying can be overwritten
 func NewProducer(addr string, tlsCfg *tls.Config) (*producer, error) {
 	var conn net.Conn
 	var err error = nil
@@ -212,7 +213,7 @@ func (p *producer) brokenPipe() bool {
 	return false
 }
 //Internal safe write packet used to check and fix error when writing packet
-func (p *producer)safeWritePacket(packet *pb.Packet) (error){
+func (p *producer) safeWritePacket(packet *pb.Packet) (error){
 	for i := 1; i <= p.MaxAttempts; i++ {
 		err := writePacket(p.conn, packet)
 	
