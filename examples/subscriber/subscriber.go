@@ -51,7 +51,7 @@ func main() {
 			}
 			fmt.Println("pausing for 5 seconds.....")
 			time.Sleep(5 * time.Second)
-			err = consumer.Resume(topic , agent.Latest) 
+			err = consumer.Resume(topic , agent.LastKnown) 
 			if err != nil {
 				fmt.Println("failed to resume")
 			}
