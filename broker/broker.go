@@ -1,13 +1,16 @@
 package broker
 
 import (
-	 pb "github.com/Tervicke/Tolstoy/internal/proto"
 	"crypto/tls"
 	"encoding/binary"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"os"
+
+	pb "github.com/Tervicke/Tolstoy/internal/proto"
+
 	//	"os"
 	//	"os/signal"
 	"strconv"
@@ -109,7 +112,8 @@ func StartServer(configpath string){
 
 
 	if err != nil{
-		log.Panicf("Error occured %v",err)
+		fmt.Println(err);
+		os.Exit(1)
 	}
 
 	addr := brokerSettings.Host + ":" + strconv.Itoa(brokerSettings.Port)
