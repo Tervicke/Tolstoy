@@ -16,6 +16,9 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// consumer manages the client-side message consumption lifecycle in the pub/sub system.
+// It maintains network connection state, topic subscriptions, message acknowledgment,
+// and ordered processing through per-topic work queues.
 type consumer struct {
 	conn        net.Conn
 	stop        chan struct{}
@@ -27,6 +30,7 @@ type consumer struct {
 	mu sync.Mutex
 }
 
+//returns a instance of agent.consumer based on the addr and the tls config if provided
 func NewConsumer(addr string, tlsCfg *tls.Config) (*consumer, error) {
 	var conn net.Conn
 	var err error
@@ -77,6 +81,7 @@ func NewConsumer(addr string, tlsCfg *tls.Config) (*consumer, error) {
 	return c, nil
 }
 
+//The internal function listen that runs in a go routine and listens to the incoming packets also routes them 
 func (c *consumer) listen() {
 	for {
 		select {
@@ -110,6 +115,7 @@ func (c *consumer) listen() {
 	}
 }
 
+//Internal function which processes the callbacks in a ordered manner
 func (c *consumer) processWorkQueue(topic string) {
 	for packet := range c.workqueue[topic] {
 
@@ -119,6 +125,7 @@ func (c *consumer) processWorkQueue(topic string) {
 	}
 }
 
+//Used to subscribe to a a topic , the callback function is runs whenever a message is recieved
 func (c *consumer) Subscribe(topic string, callback OnMessage) error {
 	Id := generateUniqueId(c.ackchannels)
 	c.ackchannels[Id] = make(chan *pb.Packet)
@@ -156,6 +163,7 @@ func (c *consumer) Subscribe(topic string, callback OnMessage) error {
 	}
 }
 
+//Used to unsubscribe from a particular topic , the broker doesnt return an error if u try to unsubscribe from a non subscribed topic
 func (c *consumer) Unsubscribe(topic string) error {
 	Id := generateUniqueId(c.ackchannels)
 	c.ackchannels[Id] = make(chan *pb.Packet)
@@ -181,6 +189,8 @@ func (c *consumer) Unsubscribe(topic string) error {
 		return errors.New("did not recieve ack")
 	}
 }
+
+//Terminates the consumer instance
 func (c *consumer) Terminate() error {
 	//send the Disconnection Packet
 	disConPacket := &pb.Packet{
@@ -192,18 +202,21 @@ func (c *consumer) Terminate() error {
 		return err
 	}
 
-	c.StopListening()
+	c.stoplistening()
 	c.conn.Close()
 	return nil
 }
 
-func (c *consumer) StopListening() {
+//Internal used to stop listening to the server and terminate the listen go routine
+func (c *consumer) stoplistening() {
 	if c.listening {
 		close(c.stop)
 	}
 	c.listening = false
 }
 
+//Pause stops the Incoming messages from a channel.
+//The topic is still subscribed.
 func (c *consumer) Pause(topic string) error {
 	Id := generateUniqueId(c.ackchannels)
 	c.ackchannels[Id] = make(chan *pb.Packet)
@@ -237,6 +250,9 @@ const (
 	Latest
 )
 
+// Resume starts consuming messages from the given topic based on the specified mode.
+// In Latest mode, the consumer ignores older messages and starts from the most recent.
+// In LastKnown mode, the consumer resumes from the last acknowledged offset, if available.
 func (c *consumer) Resume(topic string, mode ResumeMode) error {
 	Id := generateUniqueId(c.ackchannels)
 	c.ackchannels[Id] = make(chan *pb.Packet)

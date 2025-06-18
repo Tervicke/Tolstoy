@@ -25,7 +25,8 @@ type producer struct {
 	serverAddr  string      //addr of the connected server
 	tlsCfg      *tls.Config //tls config if any nil if none
 }
-
+//Returns a new producer used to send messages to a topic. 
+//tls config should be nil to not use tls settings 
 func NewProducer(addr string, tlsCfg *tls.Config) (*producer, error) {
 	var conn net.Conn
 	var err error = nil
@@ -77,6 +78,7 @@ func NewProducer(addr string, tlsCfg *tls.Config) (*producer, error) {
 	return p, nil
 }
 
+//The internal function listen that runs in a go routine and listens to the incoming packets also routes them 
 func (p *producer) listen() {
 	for {
 		select {
@@ -99,7 +101,7 @@ func (p *producer) listen() {
 		}
 	}
 }
-
+//Used to publish a message in a particular topic
 func (p *producer) Publish(topic string, payload []byte) error {
 	Id := generateUniqueId(p.ackchannels)
 	p.ackchannels[Id] = make(chan *pb.Packet)
@@ -131,6 +133,7 @@ func (p *producer) Publish(topic string, payload []byte) error {
 	return fmt.Errorf("Error recieving packet ack tried %d times", p.MaxAttempts)
 }
 
+//Used to terminate the producer
 func (p *producer) Terminate() error {
 	//send the Disconnection Packet
 	disConPacket := &pb.Packet{
@@ -141,12 +144,13 @@ func (p *producer) Terminate() error {
 		return err
 	}
 
-	p.StopListening()
+	p.stoplistening()
 	p.conn.Close()
 	return nil
 }
 
-func (p *producer) StopListening() {
+//Internal used to stop listening to the server and terminate the listen go routine
+func (p *producer) stoplistening() {
 	if p.listening {
 		close(p.stop)
 	}
@@ -207,6 +211,7 @@ func (p *producer) brokenPipe() bool {
 	}
 	return false
 }
+//Internal safe write packet used to check and fix error when writing packet
 func (p *producer)safeWritePacket(packet *pb.Packet) (error){
 	for i := 1; i <= p.MaxAttempts; i++ {
 		err := writePacket(p.conn, packet)
