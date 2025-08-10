@@ -1,2 +1,4 @@
 broker/data/tls/
 dist/
+*.log
+*.index
